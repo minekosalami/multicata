@@ -10,6 +10,16 @@ body {
     align-items: center;
 }
 
+div.container {
+    max-width: 800px;
+}
+
+p {
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 650px;
+}
+
 img {
     display: block;
     margin-left: 0;
@@ -57,12 +67,6 @@ button {
 button:hover {
     background: #5d0a7c;
     transform: scale(1.05);
-}
-
-p {
-    font-size: 18px;
-    line-height: 1.5;
-    max-width: 650px;
 }
 
 .secret1 {
