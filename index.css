@@ -17,6 +17,13 @@ img {
     width: 800px;
 }
 
+img[src="downarrow.png"] {
+    width: 150px;
+    height: auto;
+    display: block;
+    margin: 20px auto;
+}
+
 h3 {
     font-size: 42px;
     text-align: center;
@@ -50,4 +57,49 @@ button {
 button:hover {
     background: #5d0a7c;
     transform: scale(1.05);
+}
+
+p {
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 800px;
+}
+
+.secret1 {
+    position: relative;
+    display: inline-block;
+    margin: 20px auto;
+}
+
+.secret1 img {
+    display: block;
+    width: 800px;
+    max-width: 100%;
+    height: auto;
+}
+
+.secret-button {
+    position: absolute;
+    left: 63.5%;
+    top: 34.5%;
+    width: 10px;
+    height: 10px;
+    display: block;
+    z-index: 2;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    opacity: 0;
+    padding: 0;
+}
+
+.secret-button:hover,
+.secret-button:focus,
+.secret-button:active {
+    background: transparent;
+    border: none;
+    outline: none;
+    opacity: 0;
 }
