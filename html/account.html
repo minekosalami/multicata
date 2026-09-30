@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MultiCata - Account</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        input,
+        textarea {
+            display: block;
+            width: 280px;
+            padding: 12px;
+            margin: 10px auto;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+            resize: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        #accountArea,
+        #profileArea {
+            display: none;
+        }
+
+        .message {
+            margin: 15px;
+        }
+
+        .member-since {
+            color: #999;
+            margin: 15px;
+        }
+
+        .profile-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 20px;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .profile-link:hover {
+            background: #555;
+        }
+
+        .profile-picture-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #333;
+            display: block;
+            margin: 15px auto;
+        }
+
+        .profile-picture-file {
+            display: block;
+            width: 280px;
+            margin: 10px auto 15px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .profile-picture-help {
+            color: #999;
+            font-size: 14px;
+            margin: 0 auto 15px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <h1>MultiCata Account</h1>
+
+
+    <!-- LOGIN / SIGNUP -->
+
+    <div id="authArea">
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Email"
+        >
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Password"
+        >
+
+        <button onclick="signUp()">
+            Create Account
+        </button>
+
+        <button onclick="logIn()">
+            Log In
+        </button>
+
+        <p id="message" class="message"></p>
+
+    </div>
+
+
+    <!-- LOGGED IN ACCOUNT -->
+
+    <div id="accountArea">
+
+        <h2>You're logged in!</h2>
+
+        <p id="userEmail"></p>
+
+        <p id="memberSince" class="member-since"></p>
+
+        <button onclick="showProfileSetup()">
+            Edit Profile
+        </button>
+
+        <a
+            id="viewProfileButton"
+            class="profile-link"
+            href="#"
+        >
+            View My Profile
+        </a>
+
+        <br>
+
+        <button onclick="logOut()">
+            Log Out
+        </button>
+
+    </div>
+
+
+    <!-- PROFILE EDITOR -->
+
+    <div id="profileArea">
+
+        <h2>Edit Your Profile</h2>
+
+
+        <img
+            id="profilePicturePreview"
+            class="profile-picture-preview"
+            src=""
+            alt="Profile picture"
+            style="display:none;"
+        >
+
+
+        <input
+            type="text"
+            id="username"
+            placeholder="Username"
+            maxlength="20"
+        >
+
+
+        <input
+            type="text"
+            id="displayName"
+            placeholder="Display Name"
+            maxlength="40"
+        >
+
+
+        <textarea
+            id="bio"
+            placeholder="Bio"
+            maxlength="200"
+        ></textarea>
+
+
+        <input
+            type="file"
+            id="profilePictureFile"
+            class="profile-picture-file"
+            accept="image/*"
+            onchange="previewSelectedProfilePicture()"
+        >
+
+        <p class="profile-picture-help">
+            JPG, PNG, WebP, GIF, or other image files. Maximum 5 MB.
+        </p>
+
+
+        <button onclick="saveProfile()">
+            Save Profile
+        </button>
+
+
+        <button onclick="cancelProfileEdit()">
+            Cancel
+        </button>
+
+
+        <p id="profileMessage" class="message"></p>
+
+    </div>
+
+
+<script>
+
+
+    // ==========================================
+    // SUPABASE
+    // ==========================================
+
+    const SUPABASE_URL =
+        "https://ncmizvdipzjwiknslohn.supabase.co";
+
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
+
+
+    const supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+    let selectedProfilePictureFile = null;
+    let currentProfilePictureUrl = null;
+
+
+    // ==========================================
+    // SIGN UP
+    // ==========================================
+
+    async function signUp() {
+
+        const email =
+            document.getElementById("email").value.trim();
+
+
+        const password =
+            document.getElementById("password").value;
+
+
+        const { data, error } =
+            await supabaseClient.auth.signUp({
+
+                email: email,
+
+                password: password,
+
+                options: {
+
+                    emailRedirectTo:
+                        "https://multicata.com/html/account.html"
+
+                }
+
+            });
+
+
+        if (error) {
+
+            document.getElementById("message").textContent =
+                error.message;
+
+            return;
+
+        }
+
+
+        document.getElementById("message").textContent =
+            "Account created! Check your email to verify it.";
+
+    }
+
+
+    // ==========================================
+    // LOG IN
+    // ==========================================
+
+    async function logIn() {
+
+        const email =
+            document.getElementById("email").value.trim();
+
+
+        const password =
+            document.getElementById("password").value;
+
+
+        const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
+
+                email: email,
+
+                password: password
+
+            });
+
+
+        if (error) {
+
+            document.getElementById("message").textContent =
+                error.message;
+
+            return;
+
+        }
+
+
+        await showLoggedInUser(data.user);
+
+    }
+
+
+    // ==========================================
+    // LOG OUT
+    // ==========================================
+
+    async function logOut() {
+
+        await supabaseClient.auth.signOut();
+
+
+        document.getElementById("authArea").style.display =
+            "block";
+
+
+        document.getElementById("accountArea").style.display =
+            "none";
+
+
+        document.getElementById("profileArea").style.display =
+            "none";
+
+    }
+
+
+    // ==========================================
+    // SHOW LOGGED-IN USER
+    // ==========================================
+
+    async function showLoggedInUser(user) {
+
+        if (!user) return;
+
+
+        document.getElementById("authArea").style.display =
+            "none";
+
+
+        document.getElementById("accountArea").style.display =
+            "block";
+
+
+        document.getElementById("profileArea").style.display =
+            "none";
+
+
+        document.getElementById("userEmail").textContent =
+            user.email;
+
+
+        await ensureProfile(user);
+
+    }
+
+
+    // ==========================================
+    // LOAD PROFILE
+    // ==========================================
+
+    async function ensureProfile(user) {
+
+        const {
+            data: profile,
+            error: fetchError
+        } = await supabaseClient
+            .from("profiles")
+            .select(
+                "id, username, display_name, bio, profile_picture, created_at"
+            )
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+
+        if (fetchError) {
+
+            console.error(
+                "Error checking profile:",
+                fetchError
+            );
+
+            return;
+
+        }
+
+
+        if (profile) {
+
+            document.getElementById("username").value =
+                profile.username || "";
+
+
+            document.getElementById("displayName").value =
+                profile.display_name || "";
+
+
+            document.getElementById("bio").value =
+                profile.bio || "";
+
+
+            currentProfilePictureUrl =
+                profile.profile_picture || null;
+
+
+            // ======================================
+            // MEMBER SINCE
+            // ======================================
+
+            if (profile.created_at) {
+
+                const date =
+                    new Date(profile.created_at);
+
+
+                document.getElementById("memberSince").textContent =
+                    "Member since " +
+                    date.toLocaleDateString(
+                        undefined,
+                        {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                        }
+                    );
+
+            }
+
+
+            // ======================================
+            // PROFILE BUTTON
+            // ======================================
+
+            if (profile.username) {
+
+                document.getElementById("viewProfileButton").href =
+                    "profile.html?user=" +
+                    encodeURIComponent(profile.username);
+
+                document.getElementById("viewProfileButton").style.display =
+                    "inline-block";
+
+            } else {
+
+                document.getElementById("viewProfileButton").style.display =
+                    "none";
+
+            }
+
+
+            // ======================================
+            // PROFILE PICTURE PREVIEW
+            // ======================================
+
+            updateProfilePicturePreview(
+                profile.profile_picture
+            );
+
+
+            return;
+
+        }
+
+
+        // ==========================================
+        // CREATE BLANK PROFILE
+        // ==========================================
+
+        const { error: insertError } =
+            await supabaseClient
+                .from("profiles")
+                .insert({
+
+                    user_id: user.id
+
+                });
+
+
+        if (insertError) {
+
+            console.error(
+                "Error creating profile:",
+                insertError
+            );
+
+        }
+
+    }
+
+
+    // ==========================================
+    // SHOW PROFILE EDITOR
+    // ==========================================
+
+    function showProfileSetup() {
+
+        selectedProfilePictureFile = null;
+
+        document.getElementById("profilePictureFile").value =
+            "";
+
+        document.getElementById("accountArea").style.display =
+            "none";
+
+
+        document.getElementById("profileArea").style.display =
+            "block";
+
+
+        document.getElementById("profileMessage").textContent =
+            "";
+
+        updateProfilePicturePreview(
+            currentProfilePictureUrl
+        );
+
+    }
+
+
+    // ==========================================
+    // CANCEL PROFILE EDIT
+    // ==========================================
+
+    function cancelProfileEdit() {
+
+        selectedProfilePictureFile = null;
+
+        document.getElementById("profilePictureFile").value =
+            "";
+
+        document.getElementById("profileArea").style.display =
+            "none";
+
+
+        document.getElementById("accountArea").style.display =
+            "block";
+
+    }
+
+
+    // ==========================================
+    // SAVE PROFILE
+    // ==========================================
+
+    async function saveProfile() {
+
+        const username =
+            document.getElementById("username").value.trim();
+
+
+        const displayName =
+            document.getElementById("displayName").value.trim();
+
+
+        const bio =
+            document.getElementById("bio").value.trim();
+
+
+        const {
+            data: { user }
+        } = await supabaseClient.auth.getUser();
+
+
+        if (!user) {
+
+            document.getElementById("profileMessage").textContent =
+                "You aren't logged in.";
+
+            return;
+
+        }
+
+
+        // ==========================================
+        // USERNAME REQUIRED
+        // ==========================================
+
+        if (!username) {
+
+            document.getElementById("profileMessage").textContent =
+                "Please choose a username.";
+
+            return;
+
+        }
+
+
+        // ==========================================
+        // USERNAME FORMAT
+        // ==========================================
+
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+
+            document.getElementById("profileMessage").textContent =
+                "Username can only contain letters, numbers, and underscores.";
+
+            return;
+
+        }
+
+
+        let newProfilePictureUrl = currentProfilePictureUrl;
+        let uploadedProfilePicturePath = null;
+
+        // ==========================================
+        // UPLOAD PROFILE PICTURE IF ONE WAS SELECTED
+        // ==========================================
+
+        if (selectedProfilePictureFile) {
+
+            const file = selectedProfilePictureFile;
+
+            if (!file.type.startsWith("image/")) {
+
+                document.getElementById("profileMessage").textContent =
+                    "Please choose an image file.";
+
+                return;
+
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+
+                document.getElementById("profileMessage").textContent =
+                    "Profile pictures must be 5 MB or smaller.";
+
+                return;
+
+            }
+
+            document.getElementById("profileMessage").textContent =
+                "Uploading profile picture...";
+
+            const extension =
+                (file.name.split(".").pop() || "jpg")
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, "") || "jpg";
+
+            const filePath =
+                user.id + "/avatar-" + Date.now() + "." + extension;
+
+            const { error: uploadError } =
+                await supabaseClient
+                    .storage
+                    .from("avatars")
+                    .upload(filePath, file, {
+                        cacheControl: "3600",
+                        upsert: false,
+                        contentType: file.type
+                    });
+
+            if (uploadError) {
+
+                document.getElementById("profileMessage").textContent =
+                    "Profile picture upload failed: " +
+                    uploadError.message;
+
+                console.error(uploadError);
+
+                return;
+
+            }
+
+            const { data: publicUrlData } =
+                supabaseClient
+                    .storage
+                    .from("avatars")
+                    .getPublicUrl(filePath);
+
+            newProfilePictureUrl =
+                publicUrlData.publicUrl;
+
+            uploadedProfilePicturePath = filePath;
+
+        }
+
+
+        // ==========================================
+        // UPDATE PROFILE
+        // ==========================================
+
+        const { error } =
+            await supabaseClient
+                .from("profiles")
+                .update({
+
+                    username: username,
+
+                    display_name:
+                        displayName || null,
+
+                    bio:
+                        bio || null,
+
+                    profile_picture:
+                        newProfilePictureUrl || null
+
+                })
+                .eq("user_id", user.id);
+
+
+        if (error) {
+
+            // If the database update failed after a successful
+            // upload, remove the newly uploaded file.
+            if (uploadedProfilePicturePath) {
+
+                await supabaseClient
+                    .storage
+                    .from("avatars")
+                    .remove([uploadedProfilePicturePath]);
+
+            }
+
+            if (
+                error.message
+                    .toLowerCase()
+                    .includes("duplicate") ||
+                error.message
+                    .toLowerCase()
+                    .includes("unique")
+            ) {
+
+                document.getElementById("profileMessage").textContent =
+                    "That username is already taken.";
+
+            } else {
+
+                document.getElementById("profileMessage").textContent =
+                    error.message;
+
+            }
+
+
+            console.error(error);
+
+            return;
+
+        }
+
+
+        // Delete the old avatar after the new one is safely saved.
+        if (
+            uploadedProfilePicturePath &&
+            currentProfilePictureUrl
+        ) {
+
+            const oldPath =
+                getAvatarStoragePath(
+                    currentProfilePictureUrl
+                );
+
+            if (oldPath) {
+
+                await supabaseClient
+                    .storage
+                    .from("avatars")
+                    .remove([oldPath]);
+
+            }
+
+        }
+
+
+        currentProfilePictureUrl =
+            newProfilePictureUrl;
+
+        selectedProfilePictureFile = null;
+
+        document.getElementById("profilePictureFile").value =
+            "";
+
+        document.getElementById("profileMessage").textContent =
+            "Profile saved!";
+
+
+        // Reload profile information
+
+        await ensureProfile(user);
+
+
+        // Return to account view after a short delay
+
+        setTimeout(function() {
+
+            document.getElementById("profileArea").style.display =
+                "none";
+
+
+            document.getElementById("accountArea").style.display =
+                "block";
+
+        }, 700);
+
+    }
+
+
+    // ==========================================
+    // PROFILE PICTURE PREVIEW
+    // ==========================================
+
+    function updateProfilePicturePreview(url) {
+
+        const preview =
+            document.getElementById(
+                "profilePicturePreview"
+            );
+
+
+        if (url) {
+
+            preview.src = url;
+            preview.style.display = "block";
+
+        } else {
+
+            preview.removeAttribute("src");
+            preview.style.display = "none";
+
+        }
+
+    }
+
+
+    function previewSelectedProfilePicture() {
+
+        const input =
+            document.getElementById(
+                "profilePictureFile"
+            );
+
+        const file =
+            input.files && input.files[0];
+
+        if (!file) {
+
+            selectedProfilePictureFile = null;
+
+            updateProfilePicturePreview(
+                currentProfilePictureUrl
+            );
+
+            return;
+
+        }
+
+        if (!file.type.startsWith("image/")) {
+
+            input.value = "";
+
+            selectedProfilePictureFile = null;
+
+            document.getElementById("profileMessage").textContent =
+                "Please choose an image file.";
+
+            updateProfilePicturePreview(
+                currentProfilePictureUrl
+            );
+
+            return;
+
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+
+            input.value = "";
+
+            selectedProfilePictureFile = null;
+
+            document.getElementById("profileMessage").textContent =
+                "Profile pictures must be 5 MB or smaller.";
+
+            updateProfilePicturePreview(
+                currentProfilePictureUrl
+            );
+
+            return;
+
+        }
+
+        selectedProfilePictureFile = file;
+
+        const previewUrl =
+            URL.createObjectURL(file);
+
+        updateProfilePicturePreview(previewUrl);
+
+    }
+
+
+    function getAvatarStoragePath(url) {
+
+        if (!url) return null;
+
+        const marker =
+            "/storage/v1/object/public/avatars/";
+
+        const markerIndex =
+            url.indexOf(marker);
+
+        if (markerIndex === -1) {
+            return null;
+        }
+
+        return decodeURIComponent(
+            url.substring(
+                markerIndex + marker.length
+            ).split("?")[0]
+        );
+
+    }
+
+
+    // ==========================================
+    // CHECK LOGIN ON PAGE LOAD
+    // ==========================================
+
+    async function checkUser() {
+
+        const {
+            data: { user }
+        } = await supabaseClient.auth.getUser();
+
+
+        if (user) {
+
+            await showLoggedInUser(user);
+
+        }
+
+    }
+
+
+    // ==========================================
+    // AUTH STATE CHANGES
+    // ==========================================
+
+    supabaseClient.auth.onAuthStateChange(
+        (event, session) => {
+
+            if (
+                session &&
+                session.user
+            ) {
+
+                showLoggedInUser(
+                    session.user
+                );
+
+            }
+
+        }
+    );
+
+
+    // ==========================================
+    // START
+    // ==========================================
+
+    checkUser();
+
+</script>
+
+</body>
+
+</html>

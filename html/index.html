@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Cata</title>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- TOP BAR -->
+    <header class="top-bar">
+
+    <div class="site-name">
+        Multi-Cata
+    </div>
+
+    <div class="top-navigation">
+
+        <a href="chat.html" class="chat-button">
+            New - CHAT
+        </a>
+
+        <a href="account.html" class="account-button" id="accountButton">
+            Account
+        </a>
+
+    </div>
+
+</header>
+
+
+    <h1>Welcome to Multi-Cata!</h1>
+
+    <p>
+        The largest update of MultiCata so far... added a "complete" backend system including chat, account creation, and more. This was EXTREMELY difficult to make so pls appreciate :3
+    </p>
+
+
+    <div class="secret1">
+        <img src="../landingimages/welcometobackend-0.4.png" alt="Multi-Cata Logo">
+        <a href="secret.html" class="secret-button" aria-label="Open secret page"></a>
+    </div>
+
+
+    <div class="buttons">
+
+        <a href="lliosette.html">
+            <button>Visit LLiosette</button>
+        </a>
+
+        <a href="dorianhallow.html">
+            <button>Visit Dorian Hallow</button>
+        </a>
+
+        <a href="characters.html">
+            <button>Characters</button>
+        </a>
+
+    </div>
+
+
+    <h1>Multi-Cata Content:</h1>
+
+    <p>
+        Add some submissions Dorian Hallow, like a preview to your comic and such.
+    </p>
+
+
+    <script>
+
+        // Your Supabase information
+        const SUPABASE_URL = "https://ncmizvdipzjwiknslohn.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
+
+        const supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+
+        async function updateAccountButton() {
+
+            const {
+                data: { user }
+            } = await supabaseClient.auth.getUser();
+
+
+            const accountButton =
+                document.getElementById("accountButton");
+
+
+            // Not logged in
+            if (!user) {
+
+                accountButton.textContent = "Account";
+
+                return;
+
+            }
+
+
+            // Logged in — get their profile
+            const { data: profile, error } =
+                await supabaseClient
+                    .from("profiles")
+                    .select("username")
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+
+
+            if (error) {
+
+                console.error(
+                    "Error loading profile:",
+                    error
+                );
+
+                accountButton.textContent = "Account";
+
+                return;
+
+            }
+
+
+            // Show username if they have one
+            if (profile && profile.username) {
+
+                accountButton.textContent =
+                    "@" + profile.username;
+
+            } else {
+
+                accountButton.textContent =
+                    "Account";
+
+            }
+
+        }
+
+
+        updateAccountButton();
+
+    </script>
+
+</body>
+</html>
