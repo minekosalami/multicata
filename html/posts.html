@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Multi-Cata Posts</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: #222;
+        }
+
+        .site-name {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .top-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-button {
+            color: white;
+            text-decoration: none;
+            background: #333;
+            padding: 10px 16px;
+            border-radius: 8px;
+        }
+
+        .top-button:hover {
+            background: #555;
+        }
+
+
+        /* MAIN */
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+        }
+
+
+        /* COMPOSER */
+
+        .composer {
+            background: #1c1c1c;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 100px;
+            resize: vertical;
+            background: #111;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 15px;
+            font-family: Arial, sans-serif;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 10px;
+            color: #aaa;
+        }
+
+
+        /* POSTS */
+
+        .post {
+            background: #1c1c1c;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            background: #333;
+        }
+
+        .username {
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .username:hover {
+            text-decoration: underline;
+        }
+
+        .post-time {
+            color: #888;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .post-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .loading {
+            color: #888;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <!-- TOP BAR -->
+
+    <header class="top-bar">
+
+        <div class="site-name">
+            Multi-Cata
+        </div>
+
+        <div class="top-buttons">
+
+            <a href="chat.html" class="top-button">
+                New - CHAT
+            </a>
+
+            <a href="account.html" class="top-button">
+                Account
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- POSTS -->
+
+    <main class="container">
+
+        <h1>Posts</h1>
+
+
+        <div class="composer">
+
+            <textarea
+                id="postContent"
+                maxlength="1000"
+                placeholder="What's on your mind?"
+            ></textarea>
+
+            <button id="postButton">
+                Post
+            </button>
+
+            <div
+                class="message"
+                id="message"
+            ></div>
+
+        </div>
+
+
+        <div id="posts">
+
+            <div class="loading">
+                Loading posts...
+            </div>
+
+        </div>
+
+    </main>
+
+
+<script>
+
+    // ==========================================
+    // SUPABASE
+    // ==========================================
+
+    const SUPABASE_URL =
+        "https://ncmizvdipzjwiknslohn.supabase.co";
+
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
+
+
+    const supabaseClient =
+        supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+
+    const postContent =
+        document.getElementById("postContent");
+
+
+    const postButton =
+        document.getElementById("postButton");
+
+
+    const postsContainer =
+        document.getElementById("posts");
+
+
+    const message =
+        document.getElementById("message");
+
+
+    // ==========================================
+    // LOAD POSTS
+    // ==========================================
+
+    async function loadPosts() {
+
+        const {
+            data: posts,
+            error: postsError
+        } = await supabaseClient
+            .from("posts")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
+
+
+        if (postsError) {
+
+            console.error(postsError);
+
+            postsContainer.textContent =
+                "Could not load posts.";
+
+            return;
+
+        }
+
+
+        if (!posts || posts.length === 0) {
+
+            postsContainer.textContent =
+                "No posts yet.";
+
+            return;
+
+        }
+
+
+        // ==========================================
+        // GET USER IDS
+        // ==========================================
+
+        const userIds = [
+            ...new Set(
+                posts.map(
+                    post => post.user_id
+                )
+            )
+        ];
+
+
+        // ==========================================
+        // GET PROFILES
+        // ==========================================
+
+        const {
+            data: profiles,
+            error: profilesError
+        } = await supabaseClient
+            .from("profiles")
+            .select(
+                "user_id, username, display_name, profile_picture"
+            )
+            .in(
+                "user_id",
+                userIds
+            );
+
+
+        if (profilesError) {
+
+            console.error(
+                profilesError
+            );
+
+        }
+
+
+        // ==========================================
+        // PROFILE LOOKUP
+        // ==========================================
+
+        const profileMap = {};
+
+
+        if (profiles) {
+
+            profiles.forEach(
+                profile => {
+
+                    profileMap[
+                        profile.user_id
+                    ] = profile;
+
+                }
+            );
+
+        }
+
+
+        // ==========================================
+        // CLEAR POSTS
+        // ==========================================
+
+        postsContainer.innerHTML = "";
+
+
+        // ==========================================
+        // CREATE POSTS
+        // ==========================================
+
+        for (const post of posts) {
+
+            const profile =
+                profileMap[
+                    post.user_id
+                ];
+
+
+            const postElement =
+                document.createElement("div");
+
+            postElement.className =
+                "post";
+
+
+            // ======================================
+            // HEADER
+            // ======================================
+
+            const header =
+                document.createElement("div");
+
+            header.className =
+                "post-header";
+
+
+            // ======================================
+            // AVATAR
+            // ======================================
+
+            const avatar =
+                document.createElement("img");
+
+            avatar.className =
+                "avatar";
+
+
+            if (
+                profile &&
+                profile.profile_picture
+            ) {
+
+                avatar.src =
+                    profile.profile_picture;
+
+            } else {
+
+                avatar.src =
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23333'/%3E%3Ccircle cx='40' cy='30' r='14' fill='%23888'/%3E%3Ccircle cx='40' cy='72' r='25' fill='%23888'/%3E%3C/svg%3E";
+
+            }
+
+
+            avatar.alt =
+                "Profile picture";
+
+
+            // ======================================
+            // USERNAME LINK
+            // ======================================
+
+            const username =
+                document.createElement("a");
+
+            username.className =
+                "username";
+
+
+            username.textContent =
+                "@" +
+                (
+                    profile?.username ||
+                    "User"
+                );
+
+
+            // THIS IS THE IMPORTANT PART
+
+            if (
+                profile &&
+                profile.username
+            ) {
+
+                username.href =
+                    "profile.html?user=" +
+                    encodeURIComponent(
+                        profile.username
+                    );
+
+            }
+
+
+            // ======================================
+            // TIME
+            // ======================================
+
+            const time =
+                document.createElement("span");
+
+            time.className =
+                "post-time";
+
+            time.textContent =
+                new Date(
+                    post.created_at
+                ).toLocaleString();
+
+
+            // ======================================
+            // HEADER
+            // ======================================
+
+            header.appendChild(
+                avatar
+            );
+
+            header.appendChild(
+                username
+            );
+
+            header.appendChild(
+                time
+            );
+
+
+            // ======================================
+            // CONTENT
+            // ======================================
+
+            const content =
+                document.createElement("div");
+
+            content.className =
+                "post-content";
+
+            content.textContent =
+                post.content;
+
+
+            // ======================================
+            // BUILD POST
+            // ======================================
+
+            postElement.appendChild(
+                header
+            );
+
+            postElement.appendChild(
+                content
+            );
+
+
+            postsContainer.appendChild(
+                postElement
+            );
+
+        }
+
+    }
+
+
+    // ==========================================
+    // CREATE POST
+    // ==========================================
+
+    async function createPost() {
+
+        const content =
+            postContent.value.trim();
+
+
+        if (!content) {
+
+            message.textContent =
+                "Write something first.";
+
+            return;
+
+        }
+
+
+        const {
+            data: {
+                user
+            }
+        } = await supabaseClient.auth.getUser();
+
+
+        if (!user) {
+
+            message.textContent =
+                "You need to be logged in to post.";
+
+            return;
+
+        }
+
+
+        postButton.disabled = true;
+
+        message.textContent =
+            "Posting...";
+
+
+        const {
+            error
+        } = await supabaseClient
+            .from("posts")
+            .insert({
+
+                user_id:
+                    user.id,
+
+                content:
+                    content
+
+            });
+
+
+        if (error) {
+
+            console.error(error);
+
+            message.textContent =
+                error.message;
+
+            postButton.disabled =
+                false;
+
+            return;
+
+        }
+
+
+        postContent.value =
+            "";
+
+        message.textContent =
+            "Posted.";
+
+
+        postButton.disabled =
+            false;
+
+
+        await loadPosts();
+
+    }
+
+
+    // ==========================================
+    // BUTTON
+    // ==========================================
+
+    postButton.addEventListener(
+        "click",
+        createPost
+    );
+
+
+    // ==========================================
+    // INITIAL LOAD
+    // ==========================================
+
+    loadPosts();
+
+</script>
+
+</body>
+
+</html>

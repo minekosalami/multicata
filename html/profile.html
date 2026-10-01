@@ -22,14 +22,20 @@
             color: white;
         }
 
-        /* TOP BAR */
+
+        /* ================================
+           TOP BAR
+        ================================= */
 
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+
             padding: 15px 25px;
-            background: #222;
+
+            background: #1a1a1a;
+            border-bottom: 1px solid #2d2d2d;
         }
 
         .site-name {
@@ -39,84 +45,656 @@
 
         .top-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .top-button {
             color: white;
             text-decoration: none;
-            background: #333;
-            padding: 10px 16px;
-            border-radius: 8px;
+
+            background: #292929;
+
+            padding: 9px 14px;
+
+            border-radius: 7px;
+
+            font-size: 14px;
+
+            transition: background 0.15s;
         }
 
         .top-button:hover {
-            background: #555;
+            background: #3a3a3a;
         }
 
 
-        /* PROFILE */
+        /* ================================
+           PAGE
+        ================================= */
 
         .profile-container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 30px;
+            width: 100%;
+            max-width: 850px;
+
+            margin: 45px auto;
+
+            padding: 0 20px;
         }
+
+
+        /* ================================
+           PROFILE HEADER
+        ================================= */
 
         .profile-card {
-            background: #1c1c1c;
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
+            background: #1a1a1a;
+
+            border: 1px solid #2d2d2d;
+
+            border-radius: 14px;
+
+            padding: 30px;
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 25px;
         }
 
-        .profile-picture {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #333;
-            margin-bottom: 20px;
+
+        .profile-picture-container {
+            flex-shrink: 0;
         }
+
+
+        .profile-picture {
+            width: 115px;
+            height: 115px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            background: #292929;
+
+            border: 2px solid #3a3a3a;
+        }
+
+
+        .default-profile-picture {
+            width: 115px;
+            height: 115px;
+
+            border-radius: 50%;
+
+            background: #292929;
+
+            border: 2px solid #3a3a3a;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            color: #777;
+
+            font-size: 42px;
+
+            font-weight: bold;
+        }
+
+
+        .profile-information {
+            flex: 1;
+
+            min-width: 0;
+        }
+
 
         .username {
             font-size: 28px;
+
             font-weight: bold;
-            margin-bottom: 8px;
+
+            margin-bottom: 4px;
         }
+
 
         .display-name {
-            font-size: 20px;
-            color: #ccc;
-            margin-bottom: 20px;
+            color: #aaa;
+
+            font-size: 17px;
+
+            margin-bottom: 16px;
         }
+
 
         .bio {
-            font-size: 16px;
             color: #ddd;
-            margin: 20px auto;
-            max-width: 600px;
+
+            font-size: 15px;
+
+            line-height: 1.5;
+
             white-space: pre-wrap;
+
+            margin-bottom: 18px;
         }
 
+
         .member-since {
-            margin-top: 25px;
-            color: #888;
+            color: #777;
+
+            font-size: 13px;
+        }
+
+
+        /* ================================
+           POSTS SECTION
+        ================================= */
+
+        .posts-section {
+            margin-top: 30px;
+        }
+
+
+        .posts-title {
+            font-size: 21px;
+
+            font-weight: bold;
+
+            margin-bottom: 15px;
+
+            padding-left: 3px;
+        }
+
+
+        .post {
+            background: #1a1a1a;
+
+            border: 1px solid #2d2d2d;
+
+            border-radius: 12px;
+
+            padding: 18px 20px;
+
+            margin-bottom: 12px;
+
+            transition: border-color 0.15s;
+        }
+
+
+        .post:hover {
+            border-color: #444;
+        }
+
+
+        .post-header {
+            display: flex;
+
+            align-items: center;
+
+            margin-bottom: 14px;
+        }
+
+
+        .post-avatar {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            background: #292929;
+
+            margin-right: 10px;
+        }
+
+
+        .post-user-information {
+            display: flex;
+
+            flex-direction: column;
+
+            min-width: 0;
+        }
+
+
+        .post-username {
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            text-decoration: none;
+
+            width: fit-content;
+        }
+
+
+        .post-username:hover {
+            text-decoration: underline;
+        }
+
+
+        .post-time {
+            color: #777;
+
+            font-size: 11px;
+
+            margin-top: 3px;
+        }
+
+
+        .post-content {
+            color: #eee;
+
+            font-size: 15px;
+
+            line-height: 1.55;
+
+            white-space: pre-wrap;
+
+            word-wrap: break-word;
+        }
+
+
+        .no-posts {
+            background: #1a1a1a;
+
+            border: 1px solid #2d2d2d;
+
+            border-radius: 12px;
+
+            padding: 35px;
+
+            text-align: center;
+
+            color: #777;
+
             font-size: 14px;
         }
 
-        .error {
-            text-align: center;
-            color: #ff7777;
-            font-size: 20px;
-            padding: 50px;
-        }
+
+        /* ================================
+           LOADING / ERROR
+        ================================= */
 
         .loading {
             text-align: center;
-            color: #aaa;
-            font-size: 20px;
-            padding: 50px;
+
+            color: #888;
+
+            padding: 80px 20px;
+
+            font-size: 16px;
+        }
+
+
+        .error {
+            text-align: center;
+
+            color: #ff7777;
+
+            padding: 80px 20px;
+
+            font-size: 16px;
+        }
+
+
+        /* ================================
+           MOBILE
+        ================================= */
+
+        @media (max-width: 600px) {
+
+            .top-bar {
+                padding: 13px 15px;
+            }
+
+            .site-name {
+                font-size: 20px;
+            }
+
+            .top-buttons {
+                gap: 5px;
+            }
+
+            .top-button {
+                padding: 8px 10px;
+
+                font-size: 12px;
+            }
+
+            .profile-container {
+                margin: 25px auto;
+
+                padding: 0 12px;
+            }
+
+            .profile-card {
+                padding: 22px;
+
+                gap: 18px;
+            }
+
+            .profile-picture,
+            .default-profile-picture {
+                width: 85px;
+                height: 85px;
+            }
+
+            .default-profile-picture {
+                font-size: 30px;
+            }
+
+            .username {
+                font-size: 22px;
+            }
+
+            .display-name {
+                font-size: 15px;
+            }
+
+            .bio {
+                font-size: 14px;
+            }
+
+        }
+
+        :root {
+            color-scheme: dark;
+            --page: #0d0f10;
+            --surface: #151819;
+            --surface-raised: #1b1f20;
+            --line: #2b3031;
+            --text: #f0f2ef;
+            --muted: #9ba4a1;
+            --accent: #a3c7b7;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at 50% 0, rgba(163, 199, 183, 0.07), transparent 38rem),
+                var(--page);
+            color: var(--text);
+            font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .top-bar {
+            min-height: 0;
+            padding: 15px 25px;
+            background: #1a1a1a;
+            border-bottom-color: #2d2d2d;
+            gap: 12px;
+        }
+
+        .site-name {
+            color: var(--text);
+            font-size: 24px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .top-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .top-button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 8px;
+            background: #333;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 150ms ease;
+        }
+
+        .top-button:hover,
+        .top-button:focus-visible {
+            background: #555;
+            color: white;
+            outline: none;
+        }
+
+        .profile-container {
+            width: min(100%, 780px);
+            max-width: none;
+            margin: 48px auto 80px;
+            padding: 0 24px;
+        }
+
+        .profile-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            overflow: hidden;
+            padding: 30px;
+            border: 1px solid #303837;
+            border-radius: 9px;
+            background: linear-gradient(115deg, #1a201e 0%, #171a1a 54%, #151819 100%);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18);
+        }
+
+        .profile-card::before {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 3px;
+            background: var(--accent);
+            content: "";
+            opacity: 0.8;
+        }
+
+        .profile-picture,
+        .default-profile-picture {
+            width: 98px;
+            height: 98px;
+            border: 2px solid #45544d;
+        }
+
+        .default-profile-picture {
+            background: #242b28;
+            color: var(--accent);
+        }
+
+        .profile-information {
+            padding: 2px 0;
+        }
+
+        .username {
+            margin-bottom: 5px;
+            color: var(--text);
+            font-size: 27px;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
+        .display-name {
+            margin-bottom: 14px;
+            color: #aeb7b3;
+            font-size: 15px;
+        }
+
+        .bio {
+            max-width: 570px;
+            margin-bottom: 16px;
+            color: #d2d8d5;
+            font-size: 15px;
+            line-height: 1.65;
+            overflow-wrap: anywhere;
+        }
+
+        .member-since {
+            color: #87918d;
+            font-size: 12px;
+        }
+
+        .posts-section {
+            margin-top: 36px;
+        }
+
+        .posts-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding: 0 2px 13px;
+            border-bottom: 1px solid var(--line);
+            color: var(--text);
+            font-size: 17px;
+            font-weight: 650;
+        }
+
+        .posts-title::after {
+            color: var(--muted);
+            content: "";
+            flex: 1;
+        }
+
+        .post {
+            margin-bottom: 11px;
+            padding: 18px 20px 20px;
+            border: 1px solid #292e2f;
+            border-radius: 8px;
+            background: var(--surface);
+            transition: border-color 150ms ease, background 150ms ease;
+        }
+
+        .post:hover {
+            border-color: #3a4541;
+            background: #171b1b;
+        }
+
+        .post-header {
+            margin-bottom: 14px;
+        }
+
+        .post-avatar {
+            width: 39px;
+            height: 39px;
+            margin-right: 11px;
+            border: 1px solid #3b4541;
+        }
+
+        .post-username {
+            color: #d5e2dc;
+            font-size: 13px;
+        }
+
+        .post-username:hover,
+        .post-username:focus-visible {
+            color: var(--accent);
+        }
+
+        .post-time {
+            color: #87918d;
+            font-size: 12px;
+        }
+
+        .post-content {
+            color: #e1e5e3;
+            font-size: 15px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .no-posts {
+            padding: 28px 20px;
+            border: 1px dashed #343a39;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--muted);
+        }
+
+        .loading,
+        .error {
+            padding: 100px 20px;
+            color: var(--muted);
+        }
+
+        .error {
+            color: #e59b97;
+        }
+
+        @media (max-width: 600px) {
+            .top-bar {
+                align-items: center;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 13px 15px;
+            }
+
+            .top-buttons {
+                width: auto;
+                justify-content: flex-end;
+                gap: 5px;
+            }
+
+            .top-button {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .profile-container {
+                margin: 26px auto 54px;
+                padding: 0 15px;
+            }
+
+            .profile-card {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 17px;
+                padding: 22px 20px 21px;
+            }
+
+            .profile-picture,
+            .default-profile-picture {
+                width: 78px;
+                height: 78px;
+            }
+
+            .default-profile-picture {
+                font-size: 30px;
+            }
+
+            .username {
+                font-size: 23px;
+            }
+
+            .display-name {
+                margin-bottom: 12px;
+            }
+
+            .bio {
+                margin-bottom: 14px;
+            }
+
+            .posts-section {
+                margin-top: 29px;
+            }
+
+            .post {
+                padding: 16px 15px 18px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
     </style>
@@ -126,7 +704,10 @@
 
 <body>
 
-    <!-- TOP BAR -->
+
+    <!-- ==========================================
+         TOP BAR
+    =========================================== -->
 
     <header class="top-bar">
 
@@ -134,13 +715,29 @@
             Multi-Cata
         </div>
 
+
         <div class="top-buttons">
 
-            <a href="chat.html" class="top-button">
-                New - CHAT
+            <a
+                href="posts.html"
+                class="top-button"
+            >
+                Posts
             </a>
 
-            <a href="account.html" class="top-button">
+
+            <a
+                href="chat.html"
+                class="top-button"
+            >
+                Chat
+            </a>
+
+
+            <a
+                href="account.html"
+                class="top-button"
+            >
                 Account
             </a>
 
@@ -149,15 +746,22 @@
     </header>
 
 
-    <!-- PROFILE -->
+
+    <!-- ==========================================
+         PROFILE
+    =========================================== -->
 
     <main class="profile-container">
 
-        <div id="profileArea" class="loading">
+        <div
+            id="profileArea"
+            class="loading"
+        >
             Loading profile...
         </div>
 
     </main>
+
 
 
 <script>
@@ -166,7 +770,9 @@
     // SUPABASE
     // ==========================================
 
-    const SUPABASE_URL = "https://ncmizvdipzjwiknslohn.supabase.co";
+    const SUPABASE_URL =
+        "https://ncmizvdipzjwiknslohn.supabase.co";
+
 
     const SUPABASE_PUBLISHABLE_KEY =
         "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
@@ -177,6 +783,7 @@
             SUPABASE_URL,
             SUPABASE_PUBLISHABLE_KEY
         );
+
 
 
     // ==========================================
@@ -193,6 +800,7 @@
         params.get("user");
 
 
+
     // ==========================================
     // LOAD PROFILE
     // ==========================================
@@ -200,12 +808,15 @@
     async function loadProfile() {
 
         const profileArea =
-            document.getElementById("profileArea");
+            document.getElementById(
+                "profileArea"
+            );
 
 
         if (!username) {
 
-            profileArea.className = "error";
+            profileArea.className =
+                "error";
 
             profileArea.textContent =
                 "No username was provided.";
@@ -215,21 +826,33 @@
         }
 
 
-        const { data, error } =
-            await supabaseClient
-                .from("profiles")
-                .select(
-                    "username, display_name, bio, profile_picture, created_at"
-                )
-                .eq("username", username)
-                .maybeSingle();
+
+        // ======================================
+        // GET PROFILE
+        // ======================================
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("profiles")
+            .select(
+                "user_id, username, display_name, bio, profile_picture, created_at"
+            )
+            .eq(
+                "username",
+                username
+            )
+            .maybeSingle();
+
 
 
         if (error) {
 
             console.error(error);
 
-            profileArea.className = "error";
+            profileArea.className =
+                "error";
 
             profileArea.textContent =
                 "Could not load this profile.";
@@ -239,9 +862,11 @@
         }
 
 
+
         if (!data) {
 
-            profileArea.className = "error";
+            profileArea.className =
+                "error";
 
             profileArea.textContent =
                 "Profile not found.";
@@ -251,9 +876,10 @@
         }
 
 
-        // ==========================================
+
+        // ======================================
         // PROFILE PICTURE
-        // ==========================================
+        // ======================================
 
         let pictureHTML = "";
 
@@ -262,7 +888,7 @@
 
             pictureHTML = `
                 <img
-                    src="${data.profile_picture}"
+                    src="${escapeHTML(data.profile_picture)}"
                     class="profile-picture"
                     alt="Profile picture"
                 >
@@ -271,41 +897,36 @@
         } else {
 
             pictureHTML = `
-                <div
-                    class="profile-picture"
-                    style="
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        font-size:50px;
-                    "
-                >
-                    👤
+                <div class="default-profile-picture">
+                    ?
                 </div>
             `;
 
         }
 
 
-        // ==========================================
+
+        // ======================================
         // DISPLAY NAME
-        // ==========================================
+        // ======================================
 
         const displayName =
             data.display_name || "";
 
 
-        // ==========================================
+
+        // ======================================
         // BIO
-        // ==========================================
+        // ======================================
 
         const bio =
             data.bio || "No bio yet.";
 
 
-        // ==========================================
+
+        // ======================================
         // MEMBER SINCE
-        // ==========================================
+        // ======================================
 
         let memberSince =
             "Unknown";
@@ -314,56 +935,419 @@
         if (data.created_at) {
 
             memberSince =
-                new Date(data.created_at)
-                    .toLocaleDateString(
-                        undefined,
-                        {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric"
-                        }
-                    );
+                new Date(
+                    data.created_at
+                ).toLocaleDateString(
+                    undefined,
+                    {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric"
+                    }
+                );
 
         }
 
 
-        // ==========================================
+
+        // ======================================
         // BUILD PROFILE
-        // ==========================================
+        // ======================================
 
         profileArea.className =
-            "profile-card";
+            "profile-page";
 
 
         profileArea.innerHTML = `
 
-            ${pictureHTML}
+            <section class="profile-card" aria-label="Profile information">
 
-            <div class="username">
-                @${escapeHTML(data.username)}
+            <div class="profile-picture-container">
+
+                ${pictureHTML}
+
             </div>
 
-            ${
-                displayName
-                ? `
-                    <div class="display-name">
-                        ${escapeHTML(displayName)}
-                    </div>
-                  `
-                : ""
-            }
 
-            <div class="bio">
-                ${escapeHTML(bio)}
+            <div class="profile-information">
+
+                <div class="username">
+                    @${escapeHTML(data.username)}
+                </div>
+
+
+                ${
+                    displayName
+                    ?
+                    `
+                        <div class="display-name">
+                            ${escapeHTML(displayName)}
+                        </div>
+                    `
+                    :
+                    ""
+                }
+
+
+                <div class="bio">
+                    ${escapeHTML(bio)}
+                </div>
+
+
+                <div class="member-since">
+                    Member since ${memberSince}
+                </div>
+
             </div>
 
-            <div class="member-since">
-                🗓️ Member since ${memberSince}
-            </div>
+            </section>
 
         `;
 
+
+
+        // ======================================
+        // LOAD USER POSTS
+        // ======================================
+
+        await loadUserPosts(
+            data.user_id,
+            data
+        );
+
     }
+
+
+
+    // ==========================================
+    // LOAD USER POSTS
+    // ==========================================
+
+    async function loadUserPosts(
+        userId,
+        profile
+    ) {
+
+        const {
+            data: posts,
+            error
+        } = await supabaseClient
+            .from("posts")
+            .select(
+                "id, user_id, content, created_at"
+            )
+            .eq(
+                "user_id",
+                userId
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+
+        if (error) {
+
+            console.error(
+                "Could not load posts:",
+                error
+            );
+
+            return;
+
+        }
+
+
+
+        // ======================================
+        // POSTS SECTION
+        // ======================================
+
+        const postsSection =
+            document.createElement(
+                "div"
+            );
+
+
+        postsSection.className =
+            "posts-section";
+
+
+
+        // ======================================
+        // POSTS TITLE
+        // ======================================
+
+        const postsTitle =
+            document.createElement(
+                "div"
+            );
+
+
+        postsTitle.className =
+            "posts-title";
+
+
+        postsTitle.textContent =
+            "Posts";
+
+
+        postsSection.appendChild(
+            postsTitle
+        );
+
+
+
+        // ======================================
+        // NO POSTS
+        // ======================================
+
+        if (
+            !posts ||
+            posts.length === 0
+        ) {
+
+            const noPosts =
+                document.createElement(
+                    "div"
+                );
+
+
+            noPosts.className =
+                "no-posts";
+
+
+            noPosts.textContent =
+                "No posts yet.";
+
+
+            postsSection.appendChild(
+                noPosts
+            );
+
+        }
+
+
+
+        // ======================================
+        // CREATE POSTS
+        // ======================================
+
+        for (
+            const post of posts
+        ) {
+
+            const postElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            postElement.className =
+                "post";
+
+
+
+            // ==================================
+            // POST HEADER
+            // ==================================
+
+            const header =
+                document.createElement(
+                    "div"
+                );
+
+
+            header.className =
+                "post-header";
+
+
+
+            // ==================================
+            // AVATAR
+            // ==================================
+
+            const avatar =
+                document.createElement(
+                    "img"
+                );
+
+
+            avatar.className =
+                "post-avatar";
+
+
+            if (
+                profile.profile_picture
+            ) {
+
+                avatar.src =
+                    profile.profile_picture;
+
+            } else {
+
+                avatar.src =
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23292929'/%3E%3Ccircle cx='40' cy='30' r='14' fill='%23777'/%3E%3Ccircle cx='40' cy='72' r='25' fill='%23777'/%3E%3C/svg%3E";
+
+            }
+
+
+            avatar.alt =
+                "Profile picture";
+
+
+
+            // ==================================
+            // USER INFORMATION
+            // ==================================
+
+            const userInformation =
+                document.createElement(
+                    "div"
+                );
+
+
+            userInformation.className =
+                "post-user-information";
+
+
+
+            // ==================================
+            // USERNAME
+            // ==================================
+
+            const postUsername =
+                document.createElement(
+                    "a"
+                );
+
+
+            postUsername.className =
+                "post-username";
+
+
+            postUsername.textContent =
+                "@" +
+                profile.username;
+
+
+            postUsername.href =
+                "profile.html?user=" +
+                encodeURIComponent(
+                    profile.username
+                );
+
+
+
+            // ==================================
+            // TIME
+            // ==================================
+
+            const postTime =
+                document.createElement(
+                    "div"
+                );
+
+
+            postTime.className =
+                "post-time";
+
+
+            postTime.textContent =
+                new Date(
+                    post.created_at
+                ).toLocaleString();
+
+
+
+            // ==================================
+            // BUILD USER INFO
+            // ==================================
+
+            userInformation.appendChild(
+                postUsername
+            );
+
+
+            userInformation.appendChild(
+                postTime
+            );
+
+
+
+            // ==================================
+            // BUILD HEADER
+            // ==================================
+
+            header.appendChild(
+                avatar
+            );
+
+
+            header.appendChild(
+                userInformation
+            );
+
+
+
+            // ==================================
+            // POST CONTENT
+            // ==================================
+
+            const content =
+                document.createElement(
+                    "div"
+                );
+
+
+            content.className =
+                "post-content";
+
+
+            content.textContent =
+                post.content;
+
+
+
+            // ==================================
+            // BUILD POST
+            // ==================================
+
+            postElement.appendChild(
+                header
+            );
+
+
+            postElement.appendChild(
+                content
+            );
+
+
+            postsSection.appendChild(
+                postElement
+            );
+
+        }
+
+
+
+        // ======================================
+        // ADD POSTS TO PROFILE
+        // ======================================
+
+        document
+            .getElementById(
+                "profileArea"
+            )
+            .appendChild(
+                postsSection
+            );
+
+    }
+
 
 
     // ==========================================
@@ -373,13 +1357,19 @@
     function escapeHTML(text) {
 
         const div =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
-        div.textContent = text;
+
+        div.textContent =
+            text;
+
 
         return div.innerHTML;
 
     }
+
 
 
     // ==========================================
