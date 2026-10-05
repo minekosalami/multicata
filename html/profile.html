@@ -7,6 +7,8 @@
 
     <title>Multi-Cata Profile</title>
 
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -709,40 +711,15 @@
          TOP BAR
     =========================================== -->
 
-    <header class="top-bar">
-
-        <div class="site-name">
-            Multi-Cata
-        </div>
-
-
-        <div class="top-buttons">
-
-            <a
-                href="posts.html"
-                class="top-button"
-            >
-                Posts
-            </a>
-
-
-            <a
-                href="chat.html"
-                class="top-button"
-            >
-                Chat
-            </a>
-
-
-            <a
-                href="account.html"
-                class="top-button"
-            >
-                Account
-            </a>
-
-        </div>
-
+    <header class="site-header">
+        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button href="posts.html">Back to posts</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="posts.html">Posts</a>
+            <a href="chat.html">Chat</a>
+            <a href="account.html">Account</a>
+        </nav>
     </header>
 
 
@@ -1282,8 +1259,20 @@
             // BUILD HEADER
             // ==================================
 
+            const avatarLink =
+                document.createElement("a");
+
+            avatarLink.href =
+                "profile.html?user=" +
+                encodeURIComponent(profile.username);
+            avatarLink.setAttribute(
+                "aria-label",
+                "View @" + profile.username + "'s profile"
+            );
+            avatarLink.appendChild(avatar);
+
             header.appendChild(
-                avatar
+                avatarLink
             );
 
 

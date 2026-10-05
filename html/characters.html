@@ -5,14 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Cata: Characters</title>
     <link rel="stylesheet" type="text/css" href="../css/characters.css">
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script>
 </head>
 <body>
-    
+    <header class="site-header">
+        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button href="index.html">Back</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="posts.html">Posts</a>
+            <a href="chat.html">Chat</a>
+            <a href="account.html">Account</a>
+        </nav>
+    </header>
+
     <h1>Characters - MultiCata</h1>
 
     <div class="character-buttons">
-        <button onclick="showCharacter('Nart')">Nart</button>
-        <button onclick="showCharacter('Amanda')">Amanda</button>
+        <button type="button" onclick="showCharacter('Nart')">Nart</button>
+        <button type="button" onclick="showCharacter('Amanda')">Amanda</button>
     </div>
 
       <div id="character-info">
@@ -27,7 +39,7 @@
             if (character === "Nart") {
                 info.innerHTML = `
                     <h2>Nart</h2>
-                    <img src="../images/nart.jpeg" width="450">
+                    <img src="../images/nart.jpeg" width="450" alt="Nart, the Multi-Cata mascot">
 
                     <h3>Information</h3>
                     <p>Our beautiful mascot. You love him.</p>
@@ -37,7 +49,7 @@
             else if (character === "Amanda") {
                 info.innerHTML = `
                     <h2>Amanda</h2>
-                    <img src="../images/amanda.jpg" width="250">
+                    <img src="../images/amanda.jpg" width="250" alt="Amanda Accord">
 
                     <h3>Information</h3>
                     <p>Amanda Accord. Born in Nebraska, Amanda died young when she was immolated by an unknown man in a cloak. After death she made it into Wonderland where the One Beyond All gave her an ultimatum. Die, or become one with the light. Amanda chose the light and was taken to the temple. The temple infused Amanda with the ability of super human luck. Amanda’s first mission was to murder 5 sinners who had disobeyed the One Beyond All, in which she succeeded.

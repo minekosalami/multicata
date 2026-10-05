@@ -57,3 +57,17 @@ p {
 h2 {
     margin-bottom: 40px;
 }
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 44px;
+    }
+
+    .page {
+        padding: 40px 16px;
+    }
+
+    audio {
+        max-width: 100%;
+    }
+}

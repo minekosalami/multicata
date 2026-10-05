@@ -38,6 +38,7 @@ h1 {
 #character-info {
     width: 600px;
     max-width: 90%;
+    box-sizing: border-box;
     margin: 30px auto;
     padding: 30px;
     background: white;

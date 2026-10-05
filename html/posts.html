@@ -7,6 +7,8 @@
 
     <title>Multi-Cata Posts</title>
 
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -21,37 +23,6 @@
             background: #111;
             color: white;
         }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 25px;
-            background: #222;
-        }
-
-        .site-name {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .top-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .top-button {
-            color: white;
-            text-decoration: none;
-            background: #333;
-            padding: 10px 16px;
-            border-radius: 8px;
-        }
-
-        .top-button:hover {
-            background: #555;
-        }
-
 
         /* MAIN */
 
@@ -112,7 +83,13 @@
 
         .message {
             margin-top: 10px;
+            color: #d6c5e7;
+        }
+
+        #postHelp {
             color: #aaa;
+            font-size: 13px;
+            margin: 8px 0 0;
         }
 
 
@@ -167,6 +144,22 @@
             color: #888;
         }
 
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px auto;
+                padding: 16px;
+            }
+
+            .composer,
+            .post {
+                padding: 16px;
+            }
+
+            .post-header {
+                flex-wrap: wrap;
+            }
+        }
+
     </style>
 
 </head>
@@ -176,24 +169,15 @@
 
     <!-- TOP BAR -->
 
-    <header class="top-bar">
-
-        <div class="site-name">
-            Multi-Cata
-        </div>
-
-        <div class="top-buttons">
-
-            <a href="chat.html" class="top-button">
-                New - CHAT
-            </a>
-
-            <a href="account.html" class="top-button">
-                Account
-            </a>
-
-        </div>
-
+    <header class="site-header">
+        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button href="index.html">Back</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="posts.html" aria-current="page">Posts</a>
+            <a href="chat.html">Chat</a>
+            <a href="account.html" id="accountButton">Account</a>
+        </nav>
     </header>
 
 
@@ -206,11 +190,14 @@
 
         <div class="composer">
 
+            <label for="postContent">Share a post</label>
             <textarea
                 id="postContent"
                 maxlength="1000"
                 placeholder="What's on your mind?"
+                aria-describedby="postHelp message"
             ></textarea>
+            <p id="postHelp">Posts can contain up to 1,000 characters.</p>
 
             <button id="postButton">
                 Post
@@ -219,18 +206,21 @@
             <div
                 class="message"
                 id="message"
+                role="status"
+                aria-live="polite"
             ></div>
 
         </div>
 
 
-        <div id="posts">
+        <div id="posts" aria-live="polite">
 
             <div class="loading">
                 Loading posts...
             </div>
 
         </div>
+        <p id="feedMessage" class="message" role="status" aria-live="polite"></p>
 
     </main>
 
@@ -271,6 +261,45 @@
     const message =
         document.getElementById("message");
 
+    async function updateAccountButton() {
+        const accountButton = document.getElementById("accountButton");
+
+        try {
+            const {
+                data: { user },
+                error
+            } = await supabaseClient.auth.getUser();
+
+            if (error) {
+                throw error;
+            }
+
+            if (!user) {
+                accountButton.textContent = "Sign In";
+                return;
+            }
+
+            const { data: profile, error: profileError } = await supabaseClient
+                .from("profiles")
+                .select("username")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (profileError) {
+                throw profileError;
+            }
+
+            accountButton.textContent =
+                profile && profile.username ? "@" + profile.username : "Account";
+        } catch (error) {
+            if ((error.message || "").toLowerCase().includes("auth session missing")) {
+                accountButton.textContent = "Sign In";
+                return;
+            }
+            console.error("Could not update account navigation:", error);
+        }
+    }
+
 
     // ==========================================
     // LOAD POSTS
@@ -293,8 +322,8 @@
 
             console.error(postsError);
 
-            postsContainer.textContent =
-                "Could not load posts.";
+            postsContainer.innerHTML =
+                "<div class=\"no-posts\" role=\"status\">Posts are unavailable right now. Sign in if you haven't already, or try again later.</div>";
 
             return;
 
@@ -303,8 +332,8 @@
 
         if (!posts || posts.length === 0) {
 
-            postsContainer.textContent =
-                "No posts yet.";
+            postsContainer.innerHTML =
+                '<div class="no-posts">No posts yet. Be the first to share something.</div>';
 
             return;
 
@@ -347,6 +376,8 @@
             console.error(
                 profilesError
             );
+            document.getElementById("feedMessage").textContent =
+                "Some profile details are temporarily unavailable.";
 
         }
 
@@ -496,9 +527,19 @@
             // HEADER
             // ======================================
 
-            header.appendChild(
-                avatar
-            );
+            if (profile && profile.username) {
+                const avatarLink = document.createElement("a");
+                avatarLink.href =
+                    "profile.html?user=" + encodeURIComponent(profile.username);
+                avatarLink.setAttribute(
+                    "aria-label",
+                    "View @" + profile.username + "'s profile"
+                );
+                avatarLink.appendChild(avatar);
+                header.appendChild(avatarLink);
+            } else {
+                header.appendChild(avatar);
+            }
 
             header.appendChild(
                 username
@@ -583,53 +624,33 @@
 
 
         postButton.disabled = true;
+        message.textContent = "Posting...";
 
-        message.textContent =
-            "Posting...";
-
-
-        const {
-            error
-        } = await supabaseClient
+        try {
+        const { error } = await supabaseClient
             .from("posts")
             .insert({
-
-                user_id:
-                    user.id,
-
-                content:
-                    content
-
+                user_id: user.id,
+                content: content
             });
 
-
         if (error) {
-
             console.error(error);
-
             message.textContent =
-                error.message;
-
-            postButton.disabled =
-                false;
-
+                "Your post could not be published. Please try again.";
             return;
-
         }
 
-
-        postContent.value =
-            "";
-
-        message.textContent =
-            "Posted.";
-
-
-        postButton.disabled =
-            false;
-
-
+        postContent.value = "";
+        message.textContent = "Your post has been published.";
         await loadPosts();
+        } catch (error) {
+        console.error("Could not publish post:", error);
+        message.textContent =
+            "Your post could not be published. Please check your connection and try again.";
+        } finally {
+        postButton.disabled = false;
+        }
 
     }
 
@@ -648,7 +669,12 @@
     // INITIAL LOAD
     // ==========================================
 
-    loadPosts();
+    updateAccountButton();
+    loadPosts().catch(function (error) {
+        console.error("Could not load posts:", error);
+        postsContainer.innerHTML =
+            '<div class="no-posts" role="status">Posts could not be loaded. Please refresh and try again.</div>';
+    });
 
 </script>
 

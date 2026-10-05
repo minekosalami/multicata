@@ -9,22 +9,32 @@
 
     <title>MultiCata - Account</title>
 
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
 
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
             background: #111;
             color: white;
             text-align: center;
-            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .account-content {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 40px 16px;
         }
 
         input,
         textarea {
             display: block;
             width: 280px;
+            max-width: 100%;
             padding: 12px;
             margin: 10px auto;
             border-radius: 8px;
@@ -51,6 +61,7 @@
             opacity: 0.85;
         }
 
+        #authArea,
         #accountArea,
         #profileArea {
             display: none;
@@ -110,34 +121,53 @@
 
 <body>
 
+    <header class="site-header">
+        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button href="index.html">Back</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="posts.html">Posts</a>
+            <a href="chat.html">Chat</a>
+            <a href="account.html" aria-current="page">Account</a>
+        </nav>
+    </header>
+
+<main class="account-content">
     <h1>MultiCata Account</h1>
+    <p id="authLoading" role="status" aria-live="polite">Checking your sign-in status...</p>
 
 
     <!-- LOGIN / SIGNUP -->
 
     <div id="authArea">
 
+        <label for="email">Email address</label>
         <input
             type="email"
             id="email"
             placeholder="Email"
+            autocomplete="email"
+            required
         >
 
+        <label for="password">Password</label>
         <input
             type="password"
             id="password"
             placeholder="Password"
+            autocomplete="current-password"
+            required
         >
 
-        <button onclick="signUp()">
+        <button id="signUpButton" onclick="signUp()">
             Create Account
         </button>
 
-        <button onclick="logIn()">
+        <button id="logInButton" onclick="logIn()">
             Log In
         </button>
 
-        <p id="message" class="message"></p>
+        <p id="message" class="message" role="status" aria-live="polite"></p>
 
     </div>
 
@@ -151,6 +181,7 @@
         <p id="userEmail"></p>
 
         <p id="memberSince" class="member-since"></p>
+        <p id="accountMessage" class="message" role="status" aria-live="polite"></p>
 
         <button onclick="showProfileSetup()">
             Edit Profile
@@ -159,14 +190,13 @@
         <a
             id="viewProfileButton"
             class="profile-link"
-            href="#"
         >
             View My Profile
         </a>
 
         <br>
 
-        <button onclick="logOut()">
+        <button id="logOutButton" onclick="logOut()">
             Log Out
         </button>
 
@@ -183,20 +213,22 @@
         <img
             id="profilePicturePreview"
             class="profile-picture-preview"
-            src=""
             alt="Profile picture"
             style="display:none;"
         >
 
 
+        <label for="username">Username</label>
         <input
             type="text"
             id="username"
             placeholder="Username"
             maxlength="20"
+            autocomplete="username"
+            required
         >
 
-
+        <label for="displayName">Display name (optional)</label>
         <input
             type="text"
             id="displayName"
@@ -205,6 +237,7 @@
         >
 
 
+        <label for="bio">Bio (optional)</label>
         <textarea
             id="bio"
             placeholder="Bio"
@@ -225,7 +258,7 @@
         </p>
 
 
-        <button onclick="saveProfile()">
+        <button id="saveProfileButton" onclick="saveProfile()">
             Save Profile
         </button>
 
@@ -235,10 +268,11 @@
         </button>
 
 
-        <p id="profileMessage" class="message"></p>
+        <p id="profileMessage" class="message" role="status" aria-live="polite"></p>
 
     </div>
 
+</main>
 
 <script>
 
@@ -269,6 +303,28 @@
     // SIGN UP
     // ==========================================
 
+    function explainAuthError(error) {
+        const text = (error.message || "").toLowerCase();
+
+        if (text.includes("invalid login credentials")) {
+            return "Email or password is incorrect. Check your details and try again.";
+        }
+        if (text.includes("email not confirmed")) {
+            return "Please verify your email using the link we sent you before signing in.";
+        }
+        if (text.includes("already registered") || text.includes("already been registered")) {
+            return "An account already uses this email. Try logging in instead.";
+        }
+        if (text.includes("password") && text.includes("at least")) {
+            return "Choose a longer password and try again.";
+        }
+        if (text.includes("email")) {
+            return "Enter a valid email address and try again.";
+        }
+
+        return "We couldn't complete that request. Please try again.";
+    }
+
     async function signUp() {
 
         const email =
@@ -278,36 +334,38 @@
         const password =
             document.getElementById("password").value;
 
+        const message = document.getElementById("message");
+        const button = document.getElementById("signUpButton");
 
-        const { data, error } =
-            await supabaseClient.auth.signUp({
-
-                email: email,
-
-                password: password,
-
-                options: {
-
-                    emailRedirectTo:
-                        "https://multicata.com/html/account.html"
-
-                }
-
-            });
-
-
-        if (error) {
-
-            document.getElementById("message").textContent =
-                error.message;
-
+        if (!email || !password) {
+            message.textContent = "Enter your email address and password to create an account.";
             return;
-
         }
 
+        button.disabled = true;
+        message.textContent = "Creating your account...";
 
-        document.getElementById("message").textContent =
-            "Account created! Check your email to verify it.";
+        try {
+            const { error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    emailRedirectTo: "https://multicata.com/html/account.html"
+                }
+            });
+
+            if (error) {
+                message.textContent = explainAuthError(error);
+                return;
+            }
+
+            message.textContent = "Account created! Check your email to verify it.";
+        } catch (error) {
+            console.error("Account sign-up failed:", error);
+            message.textContent = "We couldn't create your account. Please check your connection and try again.";
+        } finally {
+            button.disabled = false;
+        }
 
     }
 
@@ -325,28 +383,35 @@
         const password =
             document.getElementById("password").value;
 
+        const message = document.getElementById("message");
+        const button = document.getElementById("logInButton");
 
-        const { data, error } =
-            await supabaseClient.auth.signInWithPassword({
-
-                email: email,
-
-                password: password
-
-            });
-
-
-        if (error) {
-
-            document.getElementById("message").textContent =
-                error.message;
-
+        if (!email || !password) {
+            message.textContent = "Enter your email address and password to log in.";
             return;
-
         }
 
+        button.disabled = true;
+        message.textContent = "Signing in...";
 
-        await showLoggedInUser(data.user);
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                message.textContent = explainAuthError(error);
+                return;
+            }
+
+            await showLoggedInUser(data.user);
+        } catch (error) {
+            console.error("Account sign-in failed:", error);
+            message.textContent = "We couldn't sign you in. Please check your connection and try again.";
+        } finally {
+            button.disabled = false;
+        }
 
     }
 
@@ -357,8 +422,33 @@
 
     async function logOut() {
 
-        await supabaseClient.auth.signOut();
+        if (!window.confirm("Log out of your Multi-Cata account?")) {
+            return;
+        }
 
+        const button = document.getElementById("logOutButton");
+        button.disabled = true;
+
+        try {
+            const { error } = await supabaseClient.auth.signOut();
+
+            if (error) {
+                console.error("Account sign-out failed:", error);
+                document.getElementById("accountMessage").textContent =
+                    "We couldn't log you out. Please try again.";
+                button.disabled = false;
+                return;
+            }
+        } catch (error) {
+            console.error("Account sign-out failed:", error);
+            document.getElementById("accountMessage").textContent =
+                "We couldn't log you out. Please check your connection and try again.";
+            button.disabled = false;
+            return;
+        }
+
+        document.getElementById("message").textContent = "You have been logged out.";
+        document.getElementById("accountMessage").textContent = "";
 
         document.getElementById("authArea").style.display =
             "block";
@@ -369,6 +459,8 @@
 
 
         document.getElementById("profileArea").style.display =
+            "none";
+        document.getElementById("authLoading").style.display =
             "none";
 
     }
@@ -392,6 +484,8 @@
 
 
         document.getElementById("profileArea").style.display =
+            "none";
+        document.getElementById("authLoading").style.display =
             "none";
 
 
@@ -428,6 +522,8 @@
                 "Error checking profile:",
                 fetchError
             );
+            document.getElementById("accountMessage").textContent =
+                "Your account loaded, but your profile details could not be retrieved.";
 
             return;
 
@@ -531,6 +627,8 @@
                 "Error creating profile:",
                 insertError
             );
+            document.getElementById("accountMessage").textContent =
+                "Your account is ready, but profile setup could not be started. Please refresh and try again.";
 
         }
 
@@ -592,6 +690,21 @@
     // ==========================================
 
     async function saveProfile() {
+        const button = document.getElementById("saveProfileButton");
+        button.disabled = true;
+
+        try {
+            await saveProfileChanges();
+        } catch (error) {
+            console.error("Profile save failed:", error);
+            document.getElementById("profileMessage").textContent =
+                "We couldn't save your profile. Please try again.";
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function saveProfileChanges() {
 
         const username =
             document.getElementById("username").value.trim();
@@ -701,8 +814,7 @@
             if (uploadError) {
 
                 document.getElementById("profileMessage").textContent =
-                    "Profile picture upload failed: " +
-                    uploadError.message;
+                        "Profile picture upload failed. Please try again.";
 
                 console.error(uploadError);
 
@@ -776,7 +888,7 @@
             } else {
 
                 document.getElementById("profileMessage").textContent =
-                    error.message;
+                    "We couldn't save your profile. Please try again.";
 
             }
 
@@ -966,15 +1078,40 @@
 
     async function checkUser() {
 
-        const {
-            data: { user }
-        } = await supabaseClient.auth.getUser();
+        try {
+            const {
+                data: { user },
+                error
+            } = await supabaseClient.auth.getUser();
 
+            if (error) {
+                if ((error.message || "").toLowerCase().includes("auth session missing")) {
+                    document.getElementById("authLoading").style.display = "none";
+                    document.getElementById("authArea").style.display = "block";
+                    return;
+                }
+                console.error("Could not check sign-in status:", error);
+                document.getElementById("message").textContent =
+                    "Your sign-in status could not be checked. Please refresh the page.";
+                document.getElementById("authLoading").style.display = "none";
+                document.getElementById("authArea").style.display = "block";
+                return;
+            }
 
-        if (user) {
-
-            await showLoggedInUser(user);
-
+            if (user) {
+                await showLoggedInUser(user);
+            } else {
+                document.getElementById("authLoading").style.display = "none";
+                document.getElementById("authArea").style.display = "block";
+            }
+        } catch (error) {
+            document.getElementById("authLoading").style.display = "none";
+            document.getElementById("authArea").style.display = "block";
+            if (!(error.message || "").toLowerCase().includes("auth session missing")) {
+                console.error("Could not check sign-in status:", error);
+                document.getElementById("message").textContent =
+                    "Your sign-in status could not be checked. Please refresh the page.";
+            }
         }
 
     }
@@ -1005,6 +1142,16 @@
     // ==========================================
     // START
     // ==========================================
+
+    document.getElementById("password").addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Enter" && !event.isComposing) {
+                event.preventDefault();
+                logIn();
+            }
+        }
+    );
 
     checkUser();
 

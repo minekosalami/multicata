@@ -25,6 +25,8 @@ img {
     margin-left: 0;
     margin: 30px auto;
     width: 800px;
+    max-width: 100%;
+    height: auto;
 }
 
 img[src="downarrow.png"] {
@@ -47,6 +49,7 @@ p {
 
 .buttons {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     gap: 16px;
@@ -67,6 +70,20 @@ button {
 button:hover {
     background: #5d0a7c;
     transform: scale(1.05);
+}
+
+.home-action {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 7px;
+    background: #7b1fa2;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.home-action:hover {
+    background: #5d0a7c;
 }
 
 .secret1 {
@@ -106,6 +123,12 @@ button:hover {
     border: none;
     outline: none;
     opacity: 0;
+}
+
+.secret-button:focus-visible {
+    opacity: 1;
+    outline: 2px solid white;
+    outline-offset: 2px;
 }
 
 /* TOP BAR */
@@ -157,4 +180,23 @@ button:hover {
 
 .chat-button:hover {
     background: #555;
+}
+
+@media (max-width: 600px) {
+    .top-bar {
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px 12px;
+    }
+
+    .top-navigation {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .buttons {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+    }
 }

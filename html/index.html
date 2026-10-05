@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Cata</title>
     <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script>
 
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,29 +15,15 @@
 <body>
 
     <!-- TOP BAR -->
-    <header class="top-bar">
-
-    <div class="site-name">
-        Multi-Cata
-    </div>
-
-    <div class="top-navigation">
-
-        <a href="chat.html" class="chat-button">
-            New - CHAT
-        </a>
-
-        <a href="account.html" class="account-button" id="accountButton">
-            Account
-        </a>
-
-        <a href="posts.html" class="chat-button" id="postsButton">
-            Posts
-        </a>
-
-    </div>
-
-</header>
+    <header class="site-header">
+        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html" aria-current="page">Home</a>
+            <a href="posts.html">Posts</a>
+            <a href="chat.html">Chat</a>
+            <a href="account.html" id="accountButton">Account</a>
+        </nav>
+    </header>
 
 
     <h1>Welcome to Multi-Cata!</h1>
@@ -51,17 +41,9 @@
 
     <div class="buttons">
 
-        <a href="lliosette.html">
-            <button>Visit LLiosette</button>
-        </a>
-
-        <a href="dorianhallow.html">
-            <button>Visit Dorian Hallow</button>
-        </a>
-
-        <a href="characters.html">
-            <button>Characters</button>
-        </a>
+        <a class="home-action" href="lliosette.html">Visit LLiosette</a>
+        <a class="home-action" href="dorianhallow.html">Visit Dorian Hallow</a>
+        <a class="home-action" href="characters.html">Characters</a>
 
     </div>
 
@@ -87,59 +69,43 @@
 
         async function updateAccountButton() {
 
-            const {
-                data: { user }
-            } = await supabaseClient.auth.getUser();
-
-
             const accountButton =
                 document.getElementById("accountButton");
 
+            try {
+                const {
+                    data: { user },
+                    error: authError
+                } = await supabaseClient.auth.getUser();
 
-            // Not logged in
-            if (!user) {
+                if (authError) {
+                    throw authError;
+                }
 
-                accountButton.textContent = "Account";
+                if (!user) {
+                    accountButton.textContent = "Sign In";
+                    return;
+                }
 
-                return;
-
-            }
-
-
-            // Logged in — get their profile
-            const { data: profile, error } =
-                await supabaseClient
+                const { data: profile, error } = await supabaseClient
                     .from("profiles")
                     .select("username")
                     .eq("user_id", user.id)
                     .maybeSingle();
 
+                if (error) {
+                    throw error;
+                }
 
-            if (error) {
-
-                console.error(
-                    "Error loading profile:",
-                    error
-                );
-
+                accountButton.textContent =
+                    profile && profile.username ? "@" + profile.username : "Account";
+            } catch (error) {
+                if ((error.message || "").toLowerCase().includes("auth session missing")) {
+                    accountButton.textContent = "Sign In";
+                    return;
+                }
+                console.error("Could not update account navigation:", error);
                 accountButton.textContent = "Account";
-
-                return;
-
-            }
-
-
-            // Show username if they have one
-            if (profile && profile.username) {
-
-                accountButton.textContent =
-                    "@" + profile.username;
-
-            } else {
-
-                accountButton.textContent =
-                    "Account";
-
             }
 
         }
@@ -148,6 +114,41 @@
         updateAccountButton();
 
     </script>
+
+    <!-- EVIL SECRETTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT EVIL "HELL" -->
+
+    <script>
+(function () {
+    let typedKeys = "";
+
+    document.addEventListener("keydown", function (event) {
+        // Don't trigger while typing in text fields
+        const target = event.target;
+
+        if (
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable ||
+            target.closest('[contenteditable="true"]')
+        ) {
+            return;
+        }
+
+        // Only track normal single-character keys
+        if (event.key.length !== 1) {
+            return;
+        }
+
+        typedKeys += event.key;
+        typedKeys = typedKeys.slice(-4);
+
+        // Secret phrase: Hell
+        if (typedKeys.toLowerCase() === "hell") {
+            window.location.href = "../secrets/hell.html";
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

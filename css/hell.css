@@ -1,0 +1,133 @@
+body {
+	display: grid;
+	position: relative;
+	min-height: 100vh;
+	margin: 0;
+	place-items: center;
+	overflow: hidden;
+	background: #080c0b;
+}
+
+.hell-home-link {
+	position: fixed;
+	z-index: 4;
+	top: 16px;
+	left: 16px;
+	padding: 10px 14px;
+	border: 1px solid #4a665d;
+	border-radius: 6px;
+	background: #101715;
+	color: #d5eee3;
+	font: 600 14px "Courier New", Courier, monospace;
+	text-decoration: none;
+}
+
+.hell-home-link:hover {
+	background: #1a2a24;
+}
+
+body::before,
+body::after {
+	position: fixed;
+	inset: 0;
+	content: "";
+	pointer-events: none;
+}
+
+body::before {
+	z-index: 2;
+	background:
+		linear-gradient(transparent 0 46%, rgb(205 255 245 / 12%) 49%, rgb(0 0 0 / 65%) 52%, transparent 56%),
+		repeating-linear-gradient(0deg, transparent 0 3px, rgb(0 0 0 / 38%) 4px);
+	background-size: 100% 100%, 100% 4px;
+	opacity: 0.72;
+	animation: vhs-tracking 7s linear infinite;
+}
+
+body::after {
+	z-index: 3;
+	background:
+		repeating-linear-gradient(90deg, rgb(150 255 220 / 3%) 0 1px, transparent 1px 3px),
+		radial-gradient(ellipse at center, transparent 48%, rgb(0 0 0 / 82%) 100%);
+	opacity: 0.7;
+	animation: vhs-noise 0.24s steps(2, end) infinite;
+}
+
+h3 {
+	position: relative;
+	z-index: 1;
+	margin: 0;
+	padding: 0.25rem 2rem;
+	color: #b8d8ca;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 2.4rem;
+	font-weight: 700;
+	line-height: 1.05;
+	text-align: center;
+	white-space: pre-line;
+	text-shadow: -2px 0 rgb(0 255 210 / 58%), 2px 0 rgb(255 45 65 / 48%), 0 0 12px rgb(132 255 211 / 35%);
+	animation: vhs-glitch 4.6s steps(1, end) infinite;
+}
+
+
+@keyframes vhs-glitch {
+	0%, 18%, 19%, 46%, 49%, 78%, 79%, 100% {
+		opacity: 1;
+		transform: translate(0, 0) skewX(0);
+		text-shadow: -2px 0 rgb(0 255 210 / 58%), 2px 0 rgb(255 45 65 / 48%), 0 0 12px rgb(132 255 211 / 35%);
+	}
+
+	18.5%, 47%, 78.5% {
+		opacity: 0.65;
+		transform: translate(3px, 0) skewX(-2deg);
+		text-shadow: -5px 0 #00e5c0, 5px 0 #f33;
+	}
+
+	48%, 79.5% {
+		opacity: 0.88;
+		transform: translate(-2px, 1px) skewX(1deg);
+		text-shadow: 4px 0 #00e5c0, -4px 0 #f33;
+	}
+}
+
+@keyframes vhs-tracking {
+	to {
+		background-position: 0 110vh, 0 4px;
+	}
+}
+
+@keyframes vhs-noise {
+	0%, 100% {
+		opacity: 0.66;
+	}
+	50% {
+		opacity: 0.76;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	h3 {
+		animation: none;
+	}
+
+	body::before,
+	body::after {
+		animation: none;
+	}
+}
+
+p {
+	position: relative;
+	z-index: 1;
+	margin: 0;
+	padding: 0.25rem 2rem;
+	color: #b8d8ca;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 2.4rem;
+	font-weight: 700;
+	line-height: 1.05;
+	text-align: center;
+	white-space: pre-line;
+	text-shadow: -2px 0 rgb(0 255 210 / 58%), 2px 0 rgb(255 45 65 / 48%), 0 0 12px rgb(132 255 211 / 35%);
+	animation: vhs-glitch 4.6s steps(1, end) infinite;
+}

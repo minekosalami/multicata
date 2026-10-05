@@ -7,6 +7,8 @@
 
     <title>Multi-Cata Chat</title>
 
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -22,33 +24,13 @@
             color: white;
         }
 
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 25px;
-            background: #1b1b1b;
-        }
-
-        .site-name {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .account-button {
-            color: white;
-            text-decoration: none;
-            background: #333;
-            padding: 10px 16px;
-            border-radius: 8px;
-        }
-
         .chat-container {
             max-width: 900px;
-            height: calc(100vh - 80px);
+            height: calc(100vh - 72px);
             margin: auto;
             display: flex;
             flex-direction: column;
+            padding: 0 16px;
         }
 
         .chat-title {
@@ -105,10 +87,17 @@
 
         .username {
             font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        a.username:hover {
+            text-decoration: underline;
         }
 
         .message-text {
-            word-wrap: break-word;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
         }
 
         .message-time {
@@ -126,12 +115,17 @@
 
         #messageInput {
             flex: 1;
+            min-width: 0;
+            min-height: 46px;
+            max-height: 140px;
             padding: 13px;
-            border: none;
+            border: 1px solid #555;
             border-radius: 8px;
             font-size: 16px;
             background: #333;
             color: white;
+            font: inherit;
+            resize: vertical;
         }
 
         #sendButton {
@@ -152,6 +146,40 @@
             color: #aaa;
         }
 
+        #messages[data-empty="true"]::before {
+            display: block;
+            padding: 24px 12px;
+            color: #aaa;
+            text-align: center;
+            content: "No messages yet. Start the conversation.";
+        }
+
+        @media (max-width: 600px) {
+            .chat-container {
+                height: calc(100dvh - 128px);
+                min-height: 340px;
+                padding: 0 10px;
+            }
+
+            .chat-title {
+                padding: 14px 8px;
+                font-size: 23px;
+            }
+
+            #messages {
+                padding: 12px 9px;
+            }
+
+            .input-area {
+                gap: 8px;
+                padding: 10px 4px;
+            }
+
+            #sendButton {
+                padding: 12px 14px;
+            }
+        }
+
     </style>
 
 </head>
@@ -159,16 +187,15 @@
 
 <body>
 
-    <header class="top-bar">
-
-        <div class="site-name">
-            Multi-Cata
-        </div>
-
-        <a href="account.html" class="account-button" id="accountButton">
-            Account
-        </a>
-
+    <header class="site-header">
+        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button href="index.html">Back</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="posts.html">Posts</a>
+            <a href="chat.html" aria-current="page">Chat</a>
+            <a href="account.html" id="accountButton">Account</a>
+        </nav>
     </header>
 
 
@@ -178,21 +205,23 @@
             Multi-Cata Chat
         </div>
 
-        <div id="status">
+        <div id="status" role="status" aria-live="polite">
             Connecting...
         </div>
 
-        <div id="messages"></div>
+        <div id="messages" data-empty="false"></div>
 
         <div class="input-area">
 
-            <input
-                type="text"
+            <label for="messageInput" class="visually-hidden">Message</label>
+            <textarea
                 id="messageInput"
                 placeholder="Type a message..."
                 maxlength="500"
                 autocomplete="off"
-            >
+                rows="1"
+                aria-describedby="status"
+            ></textarea>
 
             <button id="sendButton">
                 Send
@@ -231,15 +260,32 @@
 
     async function getCurrentUser() {
 
-        const {
-            data: { user }
-        } = await supabaseClient.auth.getUser();
+        let user;
+
+        try {
+            const result = await supabaseClient.auth.getUser();
+            if (result.error) {
+                if ((result.error.message || "").toLowerCase().includes("auth session missing")) {
+                    user = null;
+                } else {
+                    throw result.error;
+                }
+            } else {
+                user = result.data.user;
+            }
+        } catch (error) {
+            if (!(error.message || "").toLowerCase().includes("auth session missing")) {
+                throw error;
+            }
+        }
 
 
         if (!user) {
 
             document.getElementById("status").textContent =
                 "You must be logged in to use chat.";
+            document.getElementById("accountButton").textContent =
+                "Sign In";
 
             document.getElementById("messageInput").disabled = true;
 
@@ -251,6 +297,11 @@
 
 
         currentUser = user;
+        const profile = await getProfile(user.id);
+        if (profile.username !== "Unknown User") {
+            document.getElementById("accountButton").textContent =
+                "@" + profile.username;
+        }
 
         return true;
 
@@ -284,7 +335,18 @@
         }
 
 
-        document.getElementById("messages").innerHTML = "";
+        const messagesContainer = document.getElementById("messages");
+        messagesContainer.replaceChildren();
+
+        if (!data || data.length === 0) {
+        messagesContainer.dataset.empty = "true";
+        document.getElementById("status").textContent =
+            "No messages yet. Start the conversation.";
+        return;
+        }
+
+        messagesContainer.dataset.empty = "false";
+        document.getElementById("status").textContent = "Online";
 
 
         for (const message of data) {
@@ -312,6 +374,10 @@
                 .eq("user_id", userId)
                 .maybeSingle();
 
+
+        if (error) {
+            console.error("Could not load chat profile:", error);
+        }
 
         if (error || !data) {
 
@@ -400,16 +466,31 @@
         }
 
 
+        const hasProfile = profile.username !== "Unknown User";
         const usernameElement =
-            document.createElement("div");
+            document.createElement(hasProfile ? "a" : "span");
 
         usernameElement.className = "username";
 
         usernameElement.textContent =
             "@" + profile.username;
 
+        if (hasProfile) {
+            usernameElement.href =
+                "profile.html?user=" + encodeURIComponent(profile.username);
+        }
 
-        headerElement.appendChild(avatarElement);
+        if (hasProfile) {
+            const profileLink = document.createElement("a");
+            profileLink.href =
+                "profile.html?user=" + encodeURIComponent(profile.username);
+            profileLink.setAttribute("aria-label", "View @" + profile.username + "'s profile");
+            profileLink.appendChild(avatarElement);
+            headerElement.appendChild(profileLink);
+        } else {
+            headerElement.appendChild(avatarElement);
+        }
+
         headerElement.appendChild(usernameElement);
 
 
@@ -442,6 +523,7 @@
         document
             .getElementById("messages")
             .appendChild(messageElement);
+        document.getElementById("messages").dataset.empty = "false";
 
     }
 
@@ -466,39 +548,47 @@
 
 
         if (!currentUser) {
+            document.getElementById("status").textContent =
+                "Sign in to send a message.";
             return;
         }
 
+        const sendButton = document.getElementById("sendButton");
+        sendButton.disabled = true;
 
-        const { error } =
-            await supabaseClient
-                .from("messages")
-                .insert({
+        try {
+            const { error } =
+                await supabaseClient
+                    .from("messages")
+                    .insert({
 
-                    user_id: currentUser.id,
+                        user_id: currentUser.id,
 
-                    message: message
+                        message: message
 
-                });
+                    });
 
+            if (error) {
 
-        if (error) {
+                console.error(error);
 
-            console.error(error);
+                document.getElementById("status").textContent =
+                    "Your message could not be sent. Please try again.";
 
-            alert(
-                "Could not send message: " +
-                error.message
-            );
+                return;
 
-            return;
+            }
 
+            input.value = "";
+            input.focus();
+            document.getElementById("status").textContent = "Online";
+        } catch (error) {
+            console.error("Could not send message:", error);
+            document.getElementById("status").textContent =
+                "Your message could not be sent. Please check your connection and try again.";
+        } finally {
+            sendButton.disabled = false;
         }
-
-
-        input.value = "";
-
-        input.focus();
 
     }
 
@@ -578,11 +668,11 @@
             "keydown",
             function(event) {
 
-                if (event.key === "Enter") {
-
-                    event.preventDefault();
-
-                    sendMessage();
+                if (event.key === "Enter" && !event.isComposing) {
+                    if (!event.shiftKey) {
+                        event.preventDefault();
+                        sendMessage();
+                    }
 
                 }
 
@@ -605,14 +695,14 @@
         }
 
 
-        document.getElementById("status").textContent =
-            "Online";
-
-
-        await loadMessages();
-
-
-        setupRealtime();
+        try {
+            await loadMessages();
+            setupRealtime();
+        } catch (error) {
+            console.error("Could not start chat:", error);
+            document.getElementById("status").textContent =
+                "Chat could not be loaded. Please refresh and try again.";
+        }
 
     }
 
