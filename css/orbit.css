@@ -64,7 +64,23 @@ body.orbit-home {
 .flight-index .contents{padding:.6rem 0 0;border:0;background:none;flex:1}
 .flight-index .contents h2{font-size:1.22rem}.flight-index .contents a{font-size:.9rem;min-height:29px}
 .orbit-home .update-strip{margin-block:var(--opening-gap);border:1px solid #7f7194;border-inline:7px double #736982;background:#efe4e7}
-.feed-column{display:grid;gap:1.25rem;min-width:0}
+
+.orbit-home .portal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: var(--opening-gap);
+}
+.orbit-home .flight-deck { gap: var(--opening-gap); }
+.portal-grid .directory { grid-column: 1 / -1; margin: 0; }
+.orbit-home .station > header .posts-button {
+    padding: .35rem .85rem;
+    border: 2px solid #614737;
+    border-radius: .4rem;
+    background: #fff7df;
+    box-shadow: 2px 2px #976d57;
+    text-decoration: none;
+}
+.orbit-home .station > header .posts-button:is(:hover, :focus-visible) { text-decoration: underline; }
 .orbit-home .station,.orbit-home .directory{box-shadow:4px 5px #0907189c}
 .orbit-home .record-list .reaction-bar{grid-row:2;grid-column:1/-1;padding:.12rem 0 0;display:flex;flex-wrap:wrap;gap:.2rem}
 .orbit-home .reaction-bar button{font-size:.8rem;min-height:32px;padding:.25rem .55rem}
@@ -84,8 +100,7 @@ body.orbit-home {
  .rotor{width:clamp(3.5rem,15vw,5rem)}.rotor.bart{width:clamp(4.7rem,20vw,6.5rem)}
  .flight-index .contents{padding:0;gap:.1rem .65rem}
  .flight-index .contents h2{width:100%;font-size:.9rem}.flight-index .contents a{min-height:34px}
- .portal-grid .feed-column{display:contents}
- .portal-grid #music{order:1}.portal-grid #reading{order:2}.portal-grid #chats{order:3}.portal-grid #posts{order:4}
+ .orbit-home .portal-grid{grid-template-columns:minmax(0,1fr)}
  .orbit-home .reaction-bar button{min-height:44px}
 }
 
@@ -129,7 +144,7 @@ body.orbit-home{position:relative;--spark:radial-gradient(ellipse 3.5px 1px at 5
     position:relative;
     z-index:-1;
     container-type:inline-size;
-    height:clamp(3.8rem,6.5vw,5.4rem);
+    height:var(--opening-gap);
     pointer-events:none;
     user-select:none;
 }

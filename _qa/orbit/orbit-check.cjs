@@ -12,7 +12,7 @@ const {database,asUser,ids:[listener,creator,other]}=require('../next/local-db.c
  const [thread]=await run(listener,'select * from home_threads()');assert.equal(thread.peer,creator);assert.equal(thread.body,undefined);
  await assert.rejects(run(null,'select * from home_threads()'));await assert.rejects(run(null,'select * from home_posts()'));
  const id='00000000-0000-4000-8000-000000000070',key=id+'/00000000-0000-4000-8000-000000000071.jpg';
- await db.query("insert into articles(id,author,title,body,published) values($1,$2,'QA image article',$3,true)",[id,creator,'Text\n\n![Existing picture](image:'+key+')']);
+ await db.query("insert into articles(id,author,title,body,published) values($1,$2,'QA image article',$3,true)",[id,creator,'Text '.repeat(25)+'\n\n![Existing picture](image:'+key+')']);
  const [article]=await run(null,'select * from home_articles()');assert.equal(article.image_alt,'Existing picture');assert.equal(article.image_key,key);
  await db.query('update articles set published=false where id=$1',[id]);assert.equal((await run(null,'select * from home_articles()')).length,0);
  await db.query('insert into message_blocks values($1,$2)',[listener,creator]);assert.equal((await run(listener,'select * from home_threads()')).length,0);assert.equal((await run(listener,'select * from home_posts()')).length,0);assert.equal((await run(listener,'select * from home_creators()')).length,0);

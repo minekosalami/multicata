@@ -202,3 +202,7 @@ body.custom-profile-background .profile-container{max-width:calc(100% - 1.5rem)}
 body.community-paper #profileArea.profile-page .profile-information :is(.username,.display-name,.bio,.member-since){
     color:var(--profile-text,var(--ink))
 }
+
+.article-views { display:flex; flex-wrap:wrap; gap:.5rem; margin-block:.5rem; }
+.article-views a { display:inline-flex; align-items:center; min-height:44px; padding:.35rem .85rem; border:2px solid var(--pine); background:var(--cream); color:var(--pine); font-weight:bold; }
+.article-views a[aria-current="page"] { background:var(--sea); }

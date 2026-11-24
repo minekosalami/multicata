@@ -39,6 +39,7 @@
             const list = document.createDocumentFragment();
             for (const m of visible) {
                 const item = document.createElement("li");
+                item.dataset.id = m.id;
                 const time = document.createElement("small");
                 time.textContent = (m.sender === user.id ? "You" : "Them") + " · " + new Date(m.created_at).toLocaleString();
                 const body = document.createElement("p");
@@ -58,7 +59,16 @@
                 }
                 list.append(item);
             }
+            const previous = [...history.children].find(item => item.getBoundingClientRect().bottom > history.getBoundingClientRect().top);
+            const offset = previous?.getBoundingClientRect().top;
+            const loadingEarlier = previous && visible.some(m => m.id === history.firstElementChild.dataset.id) && visible[0]?.id !== history.firstElementChild.dataset.id;
+            const follow = !loadingEarlier && history.scrollHeight - history.clientHeight - history.scrollTop < 48;
             history.replaceChildren(list);
+            if (follow) history.scrollTop = history.scrollHeight;
+            else if (previous) {
+                const anchor = [...history.children].find(item => item.dataset.id === previous.dataset.id);
+                if (anchor) history.scrollTop += anchor.getBoundingClientRect().top - offset;
+            }
             const unread = visible.filter(m => m.recipient === user.id && !m.is_read).map(m => m.id);
             if (unread.length && !document.hidden) await result(supabaseClient.from("private_messages").update({is_read:true}).in("id",unread));
             blocked = Boolean(await result(supabaseClient.from("message_blocks").select("blocked").eq("blocker",user.id).eq("blocked",peer).maybeSingle()));

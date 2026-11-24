@@ -50,7 +50,7 @@ const {database,ids}=require('../next/local-db.cjs'),{server,openVisitor}=requir
  await snap('player');await p.keyboard.press('Escape');
  await p.locator('.record-row').first().getByRole('button',{name:/^Queue /}).click();
  const articleLink=p.locator('.site-nav a').filter({hasText:'Articles'});await articleLink.click();
- const frame=p.frameLocator('.player-page');await frame.getByRole('heading',{name:'All Articles',exact:true}).waitFor();await frame.getByText('No published articles yet.').waitFor();
+ const frame=p.frameLocator('.player-page');await frame.getByRole('heading',{name:'All Articles',exact:true}).waitFor();await frame.getByText('Write your articles here!').waitFor();
  await frame.locator('.site-nav a').filter({hasText:'Posts'}).click();await frame.getByRole('heading',{name:'All Posts'}).waitFor();
  await p.goBack();await frame.getByRole('heading',{name:'All Articles'}).waitFor();await p.goForward();await frame.getByRole('heading',{name:'All Posts'}).waitFor();
  assert(await p.locator('audio').evaluate(a=>!a.paused && a.playbackRate===.5));

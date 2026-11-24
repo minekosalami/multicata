@@ -46,7 +46,7 @@
             })().catch(()=>inbox.append(node("p","Inbox preview unavailable."))),
             (async()=>{
                 const rows=await rpc("home_posts");
-                for(const post of rows){
+                for(const post of rows.slice(0, 2)){
                     const entry=node("article",null,"home-entry"),dest="posts.html?post="+post.id;
                     entry.append(link(post.username?"@"+post.username:"Member profile",MC.profile(post.author)),timestamp(post.created_at),
                         node("p",post.excerpt||"Post with an attachment"),link("View post and comments",dest));posts.append(entry);
