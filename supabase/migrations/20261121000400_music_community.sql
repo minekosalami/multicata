@@ -239,8 +239,6 @@ revoke all on function public.register_music_key(),public.mc_limit(),public.mc_r
 create table public.profile_registrations(owner uuid primary key references auth.users(id) on delete cascade);
 alter table public.profile_registrations enable row level security;
 revoke all on public.profile_registrations from public,anon,authenticated;
-lock table public.profiles in share row exclusive mode;
-insert into public.profile_registrations select distinct user_id from public.profiles where user_id is not null;
 create function public.mc_register_profile() returns trigger language plpgsql security definer set search_path='' as $$
 begin
  if tg_op='INSERT' then
@@ -252,6 +250,12 @@ begin
  end if;
  return null;
 end $$;
-create trigger register_profile after insert or update of user_id or delete on public.profiles
- for each row execute function public.mc_register_profile();
+do $registration$
+begin
+ lock table public.profiles in share row exclusive mode;
+ insert into public.profile_registrations select distinct user_id from public.profiles where user_id is not null;
+ create trigger register_profile after insert or update of user_id or delete on public.profiles
+  for each row execute function public.mc_register_profile();
+end
+$registration$;
 revoke all on function public.mc_register_profile() from public,anon,authenticated;
