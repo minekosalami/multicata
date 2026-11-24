@@ -16,6 +16,8 @@
             document.title=row.title+" · Multi-Cata";
             root.append(node("h1",row.title),recording(row,true));
             if(row.credits)root.append(node("p",row.credits,"track-credits"));
+            if(row.release_name)root.append(link("Read release liner notes","articles.html?release="+id));
+            root.append(link("Read liner notes","articles.html?q="+encodeURIComponent("[track:"+id+"]")),link("Write liner notes","writing.html?track="+id));
             root.append(reactBar(row,user),link("Share in a post","posts.html?track="+encodeURIComponent(id===MC.bundled?"grasscats-pop":id)),discussion("track",id,user,row.user_id));return;
         }
         if(page==="notices"){

@@ -230,7 +230,18 @@
             try {
                 const page = frame.contentWindow.location;
                 if (page.origin !== location.origin) return;
-                history.replaceState(null, "", page.href);
+                const position=history.state?.readingPosition;
+                history.replaceState(history.state, "", page.href);
+                if(position>0){
+                    const view=frame.contentWindow;
+                    const restore=()=>view.scrollTo(0,position);
+                    restore();
+                    const observer=new ResizeObserver(()=>{restore();if(Math.abs(view.scrollY-position)<2)observer.disconnect();});
+                    observer.observe(frame.contentDocument.body);
+                    const stop=()=>observer.disconnect();
+                    view.addEventListener("wheel",stop,{once:true});view.addEventListener("touchstart",stop,{once:true});
+                    view.setTimeout(stop,2500);
+                }
                 document.title = frame.contentDocument.title;
                 updateIndicator();
                 show(!panel.hidden);
@@ -244,6 +255,7 @@
     }
     function navigate(href) {
         if (!started) return false;
+        history.replaceState({...history.state,readingPosition:frame?frame.contentWindow.scrollY:window.scrollY},"");
         if (!frame) createFrame();
         show(false);
         history.pushState(null, "", href);
@@ -273,7 +285,10 @@
             audio.play().then(remember).catch(() => show(true));
         }
     }
-    window.multiCataPlayer = host || {openPlayer, navigate, closePanel, enqueue, playCollection};
+    function openQueue(){setup();show(true);if(queueBox){queueBox.open=true;queueLabel.focus();}}
+    window.multiCataPlayer = host || {openPlayer,openQueue,navigate,closePanel,enqueue,playCollection};
+    const queueShortcut=document.createElement("button");queueShortcut.className="mobile-queue";queueShortcut.textContent="Queue";
+    queueShortcut.onclick=()=>window.multiCataPlayer.openQueue();toggle.after(queueShortcut);
     document.addEventListener("keydown", event => {
         if (event.key === "Escape") window.multiCataPlayer.closePanel();
     });

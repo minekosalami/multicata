@@ -39,7 +39,7 @@ const {server, openVisitor} = require('../next/runtime.cjs');
             await follow('All Music','music.html','All Music');
             await follow('Home','index.html','MultiCata');
             await follow('All Articles','articles.html','All Articles');
-            await follow('Writing','writing.html','Writing');
+            await follow('Write an article','writing.html','Writing');
             await follow('All Articles','articles.html','All Articles');
             await follow('Home','index.html','MultiCata');
             await follow('View all posts','posts.html','All Posts');

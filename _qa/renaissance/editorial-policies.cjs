@@ -42,6 +42,15 @@ const {database,asUser,ids:[reader,writer,admin]}=require('../next/local-db.cjs'
  assert((await one(null,'select featured from articles where id=$1',[id])).featured);
  await run(writer,"update articles set title='Updated article' where id=$1",[id]);
  assert.equal((await one(null,'select featured from articles where id=$1',[id])).featured,false);
+ const vote=(who,choice)=>run(who,"select set_writing_vote('article',$1,$2)",[id,choice]);
+ await vote(reader,1);await vote(reader,-1);await vote(writer,1);
+ assert.equal((await run(reader,'select * from writing_votes')).length,1);
+ const totals=()=>one(null,"select * from writing_vote_counts('article',array[$1::uuid])",[id]);
+ assert.equal(Number((await totals()).likes),1);assert.equal(Number((await totals()).dislikes),1);
+ await vote(reader,0);assert.equal(Number((await totals()).dislikes),0);
+ await assert.rejects(vote(null,1));
+ await run(writer,'update articles set published=false where id=$1',[id]);await assert.rejects(vote(reader,1));
+ assert.equal(await totals(),undefined);
  console.log('PASS: open writing, title and length, draft privacy, uploads, approval permissions and edit invalidation.');
  }finally{await db.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

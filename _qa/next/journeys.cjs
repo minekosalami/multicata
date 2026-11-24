@@ -66,7 +66,7 @@ const {server,openVisitor}=require('./runtime.cjs');
     ['posts','posts.html','.post'],['inbox','inbox.html?peer='+b,'#history li'],['upload','account.html','#editProfile:enabled'],
     ['favorites','favorites.html','.record-row'],['notices','notices.html','.notice']
    ]){
-    await goto(p,url);await p.locator(ready).first().waitFor({state:name==='inbox'?'attached':'visible'});
+    await goto(p,url);if(name==="profile")await p.getByText("View replies (1)",{exact:true}).first().click();await p.locator(ready).first().waitFor({state:name==='inbox'?'attached':'visible'});
     if(name==='posts'){await p.locator('.post summary').first().click();await p.locator('.comment').first().waitFor();}
     if(name==='upload')await p.getByText('Publish music',{exact:true}).click();
     if(name==='profile'){

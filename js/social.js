@@ -93,6 +93,56 @@ const MC = (() => {
         }
         paint();area.append(like,dislike,heart,state);return area;
     }
+    async function voting(kind, ids, user) {
+        const read = async targets => {
+            const [counts, mine] = await Promise.all([
+                rpc("writing_vote_counts",{kind,targets}),
+                user ? rpc("my_writing_votes",{kind,targets}) : []
+            ]);
+            const state=new Map(targets.map(id=>[id,{choice:0}]));
+            for(const row of counts)Object.assign(state.get(row.target),row);
+            for(const row of mine)state.get(row.target).choice=row.value;
+            return state;
+        };
+        const state = await read(ids);
+        return id => {
+            const bar=node("div",null,"reaction-bar"),status=feedback();
+            const buttons=[1,-1].map(value=>button("",async()=>{
+                buttons.forEach(b=>b.disabled=true);
+                try {
+                    await rpc("set_writing_vote",{kind,target:id,choice:state.get(id).choice===value?0:value});
+                    state.set(id,(await read([id])).get(id));status.textContent="";
+                } catch {status.textContent="Vote could not be updated. Try again.";}
+                paint();
+            }));
+            function paint() {
+                const row=state.get(id);
+                buttons.forEach((b,i)=>{
+                    b.textContent=(i?"Dislike":"Like")+" · "+(i?row.dislikes||0:row.likes||0);
+                    b.setAttribute("aria-pressed",String(row.choice===(i?-1:1)));b.disabled=!user;
+                });
+            }
+            paint();bar.append(...buttons,status);return bar;
+        };
+    }
+    function report(kind,id) {
+        return button("Report",async e=>{
+            const b=e.currentTarget;
+            const reason=await communityDialog("Report "+kind,"Submit report",{label:"Reason",limit:500});
+            if(!reason?.trim())return;
+            b.disabled=true;
+            const {error}=await supabaseClient.from("writing_reports").insert({[kind==="article"?"article":"entry"]:id,reason:reason.trim()});
+            b.textContent=!error || error.code==="23505"?"Reported":"Try reporting again";b.disabled=b.textContent==="Reported";
+        });
+    }
+    function copyLink(label,href) {
+        return button(label,async e=>{
+            const b=e.currentTarget;
+            try {await navigator.clipboard.writeText(new URL(href,location.href).href);b.textContent="Copied";}
+            catch {const a=link("Open link",href);b.replaceWith(a);}
+        });
+    }
+
     function discussion(topic,target,user,owner) {
         const details=node("details",null,"discussion");
         const heading=topic==="guestbook"?"Guestbook":"Comments";
@@ -103,10 +153,13 @@ const MC = (() => {
         const send=node("button",topic==="guestbook"?"Sign guestbook":"Comment");
         const cancel=button("Cancel reply",()=>choose(null));
         let parent=null;
+        const expanded=new Set();
+        const context=node("blockquote");context.hidden=true;form.prepend(context);
         function choose(entry) {
             parent=entry?.id || null; cancel.hidden=!parent;
             label.firstChild.textContent=parent?"Reply to @"+(entry.username || "Member"):"Your message";
             send.textContent=parent?"Send reply":topic==="guestbook"?"Sign guestbook":"Comment";
+            context.hidden=!entry;context.textContent=entry?.body || "";
             if(entry) input.focus();
         }
         cancel.hidden=true;label.append(input);form.append(label,send,cancel);
@@ -115,13 +168,15 @@ const MC = (() => {
             send.disabled=true;
             try {
                 await rpc("leave_comment",{topic,target,message:input.value.trim(),parent});
+                if(parent)expanded.add(parent);
                 input.value="";choose(null);await load();status.textContent="Posted.";
             } catch(e){status.textContent=e.message?.includes("minute")?"Please wait a minute before posting again.":"Could not post this message.";}
             finally {send.disabled=false;}
         };
         async function load(){
             try {
-                const rows=await rpc("discussion",{topic,target});
+                const rows=await rpc("thread_entries",{topic,target});
+                const votes=await voting("comment",rows.map(r=>r.id),user);
                 const replies=new Map();
                 for(const row of rows.filter(r=>r.parent_id)) {
                     if(!replies.has(row.parent_id)) replies.set(row.parent_id,[]);
@@ -139,15 +194,45 @@ const MC = (() => {
                             try {await rpc("remove_comment",{entry:row.id});await load();} catch {status.textContent="Could not remove comment.";}
                         }));
                     }
-                    fragment.append(el);
+                    el.append(votes(row.id),copyLink("Copy link","#comment-"+row.id));
+                    if(user && row.author!==user.id)el.append(report("comment",row.id));
+                    if(user?.id===row.author)el.append(button("Edit",async()=>{
+                        const text=await communityDialog("Edit message","Save",{label:"Message",limit:1500,value:row.body});
+                        if(!text?.trim())return;
+                        const {error}=await supabaseClient.from("community_comments").update({body:text.trim()}).eq("id",row.id);
+                        if(error)status.textContent="Could not save this edit.";else await load();
+                    }));
+                    if(row.edited_at)head.append(" (edited)");
+                    return el;
                 }
-                for(const row of rows.filter(r=>!r.parent_id)) {entry(row);for(const reply of replies.get(row.id)||[])entry(reply);}
+                for(const row of rows.filter(r=>!r.parent_id)) {
+                    fragment.append(entry(row));
+                    const children=replies.get(row.id);
+                    if(!children?.length)continue;
+                    const thread=node("details");
+                    thread.append(node("summary","View replies ("+children.length+")"),...children.map(entry));
+                    thread.open=expanded.has(row.id)||children.some(r=>location.hash==="#comment-"+r.id);
+                    thread.ontoggle=()=>thread.open?expanded.add(row.id):expanded.delete(row.id);
+                    fragment.append(thread);
+                }
                 if(!rows.length)fragment.append(node("p",topic==="guestbook"?"No guestbook entries yet.":"No comments yet.","quiet"));
                 list.replaceChildren(fragment);status.textContent="";
                 if(location.hash.startsWith("#comment-"))document.getElementById(location.hash.slice(1))?.scrollIntoView();
             }catch {status.textContent="Discussion unavailable. Close and reopen to retry.";}
         }
         details.append(list,user?form:link(topic==="guestbook"?"Sign in to sign the guestbook":"Sign in to comment","account.html"),status);
+        if(user){
+            const prefs=()=>supabaseClient.from("muted_discussions");
+            const mute=button("Mute discussion",async()=>{
+                mute.disabled=true;
+                const active=mute.getAttribute("aria-pressed")==="true";
+                const {error}=await (active?prefs().delete().eq("member",user.id).eq("topic",topic).eq("target",target):prefs().insert({topic,target}));
+                if(error)status.textContent="Could not update notifications.";else paint(!active);
+                mute.disabled=false;
+            });
+            function paint(active){mute.textContent=active?"Unmute discussion":"Mute discussion";mute.setAttribute("aria-pressed",String(active));}
+            prefs().select("target").eq("member",user.id).eq("topic",topic).eq("target",target).maybeSingle().then(({data,error})=>{if(!error){paint(Boolean(data));details.append(mute);}});
+        }
         details.ontoggle=()=>{if(details.open)load();};
         if(topic==="article" || topic==="guestbook" || topic==="track" || location.hash.startsWith("#comment-"))details.open=true;
         return details;
@@ -176,5 +261,5 @@ const MC = (() => {
         }
         try{await render();}catch{status.textContent="Follow information unavailable.";}
     }
-    return {bundled,node,link,button,feedback,rpc,viewer,profile,track,mentions,media,recording,reactBar,discussion,relationships};
+    return {bundled,node,link,button,feedback,rpc,viewer,profile,track,mentions,media,recording,reactBar,discussion,relationships,voting,report,copyLink};
 })();

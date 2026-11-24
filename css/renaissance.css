@@ -206,3 +206,20 @@ body.community-paper #profileArea.profile-page .profile-information :is(.usernam
 .article-views { display:flex; flex-wrap:wrap; gap:.5rem; margin-block:.5rem; }
 .article-views a { display:inline-flex; align-items:center; min-height:44px; padding:.35rem .85rem; border:2px solid var(--pine); background:var(--cream); color:var(--pine); font-weight:bold; }
 .article-views a[aria-current="page"] { background:var(--sea); }
+.mobile-queue {display:none}
+@media(max-width:600px){.site-nav .mobile-queue{display:inline-flex;min-height:36px;align-items:center}}
+.portal-grid .collapsed-widget > :not(header,h2){display:none}
+.portal-grid .collapsed-widget{align-self:start;padding-bottom:0}
+.flight-index details label,.article-views label,.editorial-sheet details > div > a,.manuscripts section > a{display:block}
+.article-views label {min-width:0}
+.article-views input {max-width:100%}
+.article-editor pre,.article-prose {overflow-wrap:anywhere;white-space:pre-wrap}
+.article-editor .writing-preview{min-width:0;background:var(--cream);padding:1rem;border:1px solid var(--pine)}
+@media(min-width:900px){
+ .article-editor.previewing{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.6rem 1rem}
+ .article-editor.previewing > *{grid-column:1}
+ .article-editor.previewing .writing-preview{grid-column:2;grid-row:1 / span 15;align-self:start}
+}
+@media(max-width:899px){
+ .article-editor.previewing > :is(label,.format-tools,details){display:none}
+}
