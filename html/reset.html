@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Reset password · MultiCata</title>
+    <link rel="stylesheet" href="../css/site.css">
+    <link rel="stylesheet" href="../css/listening-room.css">
+    <link rel="stylesheet" href="../css/renaissance.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script>
+    <script src="../js/recovery.js"></script>
+    <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
+</head>
+<body class="community-paper">
+    <header class="site-header">
+        <a class="site-brand" href="index.html">Multi-Cata</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a><a href="account.html">Account</a>
+        </nav>
+    </header>
+    <main class="account-content">
+        <h1>Reset password</h1>
+        <form id="requestReset" hidden>
+            <label for="recoveryEmail">Account email address</label>
+            <input id="recoveryEmail" type="email" autocomplete="email" required>
+            <button>Send reset code</button>
+            <button type="button" id="haveCode">I already have a code</button>
+        </form>
+        <form id="verifyCode" hidden>
+            <label for="codeEmail">Account email address</label>
+            <input id="codeEmail" type="email" autocomplete="email" required>
+            <label for="recoveryCode">Code from your email</label>
+            <input id="recoveryCode" inputmode="numeric" autocomplete="one-time-code" required>
+            <button>Verify code</button>
+            <button type="button" id="anotherCode">Request another code</button>
+        </form>
+        <form id="setPassword" hidden>
+            <label for="newPassword">New password</label>
+            <input id="newPassword" type="password" autocomplete="new-password" required minlength="6">
+            <label for="repeatPassword">Confirm new password</label>
+            <input id="repeatPassword" type="password" autocomplete="new-password" required>
+            <button>Save new password</button>
+        </form>
+        <p id="resetStatus" role="status" aria-live="polite">Loading password recovery…</p>
+        <a href="account.html">Return to account</a>
+    </main>
+</body>
+</html>

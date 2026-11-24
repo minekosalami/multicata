@@ -254,6 +254,9 @@ otp_expiry = 3600
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
+[auth.email.template.recovery]
+subject = "Your Multi-Cata password reset code"
+content_path = "./supabase/templates/recovery.html"
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
