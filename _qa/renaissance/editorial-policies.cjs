@@ -1,0 +1,44 @@
+const assert=require('node:assert/strict');
+const {database,asUser,ids:[reader,writer,admin]}=require('../next/local-db.cjs');
+(async()=>{
+ const db=await database();
+ const run=(who,sql,args=[])=>asUser(db,who,async tx=>(await tx.query(sql,args)).rows);
+ const one=async(who,sql,args)=>(await run(who,sql,args))[0];
+ const visible=async(user,id)=>!!await one(user,'select id from articles where id=$1',[id]);
+ try{
+ await db.query('insert into editorial_admins values($1)',[admin]);
+ await assert.rejects(run(reader,"insert into articles(title) values('Draft')"));
+ await assert.rejects(run(reader,'insert into editorial_admins values($1)',[reader]));
+ await assert.rejects(run(writer,"insert into writer_applications(statement,status) values('Fixture','approved')"));
+ await run(writer,"insert into writer_applications(statement) values('Fixture')");
+ assert.equal((await run(reader,'select * from writer_applications')).length,0);
+ assert.equal((await run(writer,"update writer_applications set status='approved' returning member")).length,0);
+ await run(admin,"update writer_applications set status='approved' where member=$1",[writer]);
+ const {id}=await one(writer,"insert into articles(title) values('Fixture study') returning id");
+ assert(await visible(writer,id));assert(!await visible(reader,id));assert(!await visible(null,id));
+ const key=id+'/00000000-0000-4000-8000-000000000072.jpg',image=[key];
+ const imageRows=who=>run(who,"select name from storage.objects where bucket_id='article-images' and name=$1",image);
+ await run(writer,"insert into storage.objects(bucket_id,name) values('article-images',$1)",image);
+ await assert.rejects(run(reader,"insert into storage.objects(bucket_id,name) values('article-images',$1)",image));
+ assert.equal((await imageRows(reader)).length,0);
+ await run(writer,"update articles set body='Fixture text', published=true where id=$1",[id]);
+ assert.equal((await run(writer,"update articles set title='Stale version' where id=$1 and revision=1 returning id",[id])).length,0);
+ assert(await visible(null,id));assert.equal((await imageRows(reader)).length,0);
+ await run(writer,"update articles set body=$2 where id=$1",[id,'![Description](image:'+key+')']);
+ assert.equal((await imageRows(reader)).length,1);assert.equal((await imageRows(null)).length,1);
+ const comment=async(who,msg,parent)=>(await one(who,"select leave_comment('article',$1,$2,$3) id",[id,msg,parent])).id;
+ const top=await comment(reader,'Fixture question',null),reply=await comment(writer,'Fixture reply',top);
+ await assert.rejects(comment(reader,'Second level',reply));
+ assert.equal((await run(null,"select * from discussion('article',$1)",[id])).length,2);
+ assert.equal((await one(reader,"select topic from notice_feed() where entry=$1",[reply])).topic,'article');
+ assert.equal((await run(reader,"update articles set title='Other' where id=$1 returning id",[id])).length,0);
+ await run(writer,'update articles set published=false where id=$1',[id]);
+ assert.equal((await run(null,"select * from discussion('article',$1)",[id])).length,0);
+ assert.equal((await imageRows(reader)).length,0);
+ assert.equal((await imageRows(null)).length,0);
+ await assert.rejects(comment(reader,'On draft',null));
+ await run(admin,"update writer_applications set status='revoked' where member=$1",[writer]);
+ assert.equal((await run(writer,'update articles set published=true where id=$1 returning id',[id])).length,0);
+ console.log('PASS: ordinary member, writer and admin roles; private applications, drafts and image references; public reads, author-only saves, unpublishing, revocation, replies and notices.');
+ }finally{await db.close();}
+})().catch(e=>{console.error(e);process.exitCode=1});

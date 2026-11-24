@@ -1,0 +1,34 @@
+:root { --ink:#221e26; --paper:#faf8f3; --plum:#642d83; --rule:#aaa29b; }
+body { margin:0; color:var(--ink); background:var(--paper); font:1rem/1.5 Arial,Helvetica,sans-serif; }
+.catalogue,.artist-note { width:min(70rem,calc(100% - 2.5rem)); margin:clamp(1.2rem,4vw,3.6rem) auto; }
+.catalogue a,.artist-note a { color:var(--plum); text-underline-offset:3px; }
+.feature { display:grid; grid-template-columns:1.08fr 1fr; border-block:2px solid var(--ink); padding-block:clamp(1rem,2.7vw,2rem); gap:clamp(1.2rem,4vw,3.5rem); align-items:center; }
+.poster { position:relative; border:1px solid #c2b9b1; background:#fff; }
+.poster img,.cats-saga img { display:block; width:100%; height:auto; }
+.secret-button { position:absolute; left:63.5%; top:34.5%; width:14px; height:14px; }
+.secret-button:focus-visible { outline:2px solid var(--plum); }
+.label,.feature .label { font:700 .79rem/1.3 Arial,sans-serif; text-transform:uppercase; letter-spacing:.1em; color:var(--plum); margin:0 0 .7rem; }
+.feature h1,.artist-note h1 { font:normal clamp(3rem,6.3vw,5.8rem)/.99 Georgia,serif; letter-spacing:-.055em; margin:0 0 .6rem; }
+.artist-byline { font:1.35rem Georgia,serif; }
+.record-note { color:#574e59; margin:1.2rem 0; }
+.actions { display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap; }
+.play-record { cursor:pointer; padding:.8rem 1.1rem; background:var(--plum); color:white; border:0; font:700 1rem Arial,sans-serif; }
+.play-record::before { content:"▶"; margin-right:.6em; font-size:.78em; }
+.play-record:hover { background:#49215f; }
+.home-columns { display:grid; grid-template-columns:1.08fr 1fr; gap:clamp(1.2rem,4vw,3.5rem); padding:1.2rem 0 2.5rem; }
+.home-columns h2 { font:normal 2rem Georgia,serif; margin:1rem 0 .5rem; }
+.catalogue .directory-link { color:var(--ink); display:flex; flex-wrap:wrap; gap:.2rem 1rem; align-items:baseline; padding:.65rem 0; font-weight:600; text-decoration:none; border-bottom:1px solid #cbc4bf; }
+.directory-link::after { content:"↗"; margin-left:auto; color:var(--plum); }
+.directory-link:hover { text-decoration:underline; }
+.directory-link small { font-weight:400; color:#5a515a; }
+.cats-saga { margin:0; max-width:34rem; border-top:1px solid var(--rule); padding:1rem 0; }
+.cats-saga figcaption { font:.85rem Georgia,serif; padding:.4rem 0; }
+#recentPosts p { line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
+.artist-note { padding-top:2rem; border-top:2px solid var(--ink); }
+@media(max-width:620px) {
+  .feature,.home-columns { grid-template-columns:minmax(0,1fr); }
+  .poster { max-width:23rem; width:100%; box-sizing:border-box; }
+  .record-info { grid-row:1; }
+  .feature h1 { font-size:clamp(2.9rem,12vw,4rem); }
+  .home-columns { gap:.3rem; }
+}

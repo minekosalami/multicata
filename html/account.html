@@ -11,7 +11,9 @@
 
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script>
 
     <style>
 
@@ -116,16 +118,23 @@
 
     </style>
 
+<script src="../js/community.js"></script>
+    <script src="../js/music.js"></script>
+    <script src="../js/profile-options.js"></script>
+    <link rel="stylesheet" href="../css/community.css">
+    <link rel="stylesheet" href="../css/listening-room.css">
+<link rel="stylesheet" href="../css/renaissance.css">
 </head>
 
 
-<body>
+<body class="community-paper">
 
     <header class="site-header">
-        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
         <a class="back-button" data-back-button href="index.html">Back</a>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
+            <a href="../html/articles.html">Articles</a>
             <a href="posts.html">Posts</a>
             <a href="chat.html">Chat</a>
             <a href="account.html" aria-current="page">Account</a>
@@ -133,7 +142,7 @@
     </header>
 
 <main class="account-content">
-    <h1>MultiCata Account</h1>
+    <h1>Account</h1>
     <p id="authLoading" role="status" aria-live="polite">Checking your sign-in status...</p>
 
 
@@ -176,14 +185,14 @@
 
     <div id="accountArea">
 
-        <h2>You're logged in!</h2>
+        <h2>Your profile</h2>
 
         <p id="userEmail"></p>
 
         <p id="memberSince" class="member-since"></p>
         <p id="accountMessage" class="message" role="status" aria-live="polite"></p>
 
-        <button onclick="showProfileSetup()">
+        <button id="editProfile" disabled onclick="showProfileSetup()">
             Edit Profile
         </button>
 
@@ -196,6 +205,17 @@
 
         <br>
 
+        <details><summary>Publish music</summary>
+            <form id="publishMusic">
+                <label>Title <input name="title" maxlength="150" required></label>
+                <label>Release (optional) <input name="releaseName" maxlength="150"></label>
+                <label>Release artwork (optional)<input name="art" type="file" accept="image/jpeg,image/png"></label>
+                <label>Credits (optional) <textarea name="credits" maxlength="1000"></textarea></label>
+                <label>MP3 file (up to 50 MB) <input name="recording" type="file" accept=".mp3,audio/mpeg" required></label>
+                <button name="publish">Publish track</button><p role="status"></p>
+            </form>
+        </details>
+        <div class="account-links"><a href="writing.html">Writing</a> · <a href="favorites.html">Favorite Music</a> · <a href="notices.html">Notifications</a> · <a href="inbox.html">Private messages</a></div>
         <button id="logOutButton" onclick="logOut()">
             Log Out
         </button>
@@ -245,19 +265,42 @@
         ></textarea>
 
 
-        <input
+        <label for="profilePictureFile">Profile picture</label>
+        <input aria-describedby="pictureHelp"
             type="file"
             id="profilePictureFile"
             class="profile-picture-file"
-            accept="image/*"
+            accept="image/jpeg,image/png"
             onchange="previewSelectedProfilePicture()"
         >
 
-        <p class="profile-picture-help">
-            JPG, PNG, WebP, GIF, or other image files. Maximum 5 MB.
+        <p id="pictureHelp" class="profile-picture-help">
+            JPEG or static PNG, up to 5 MB.
         </p>
 
 
+        <fieldset id="appearance" hidden>
+            <legend>Profile appearance</legend>
+            <label>Banner <input id="banner_path" type="file" accept="image/jpeg,image/png"></label>
+            <label>Background image <input id="background_path" type="file" accept="image/jpeg,image/png"></label>
+            <label><input type="checkbox" id="clearBanner"> Remove banner</label>
+            <label><input type="checkbox" id="clearBackground"> Remove background image</label>
+            <label>Background color <input id="background_color" placeholder="#111111" maxlength="7"></label>
+            <label>Accent color <input id="accent_color" placeholder="#b99bd1" maxlength="7"></label>
+            <label>Border color <input id="border_color" placeholder="#708c81" maxlength="7"></label>
+            <label>Profile text color <input id="text_color" placeholder="#292229" maxlength="7" aria-describedby="colorFeedback"></label>
+            <p id="colorFeedback" role="status"></p>
+            <h3>Profile preview</h3>
+            <div id="appearancePreview">
+                <img class="profile-banner" alt="" hidden>
+                <div class="identity-preview">
+                    <img class="preview-avatar" alt="" hidden>
+                    <strong class="preview-name"></strong>
+                    <p class="preview-bio"></p>
+                </div>
+            </div>
+            <label>Social links (one per line, up to five)<textarea id="social_links"></textarea></label>
+        </fieldset>
         <button id="saveProfileButton" onclick="saveProfile()">
             Save Profile
         </button>
@@ -281,21 +324,10 @@
     // SUPABASE
     // ==========================================
 
-    const SUPABASE_URL =
-        "https://ncmizvdipzjwiknslohn.supabase.co";
 
-
-    const SUPABASE_PUBLISHABLE_KEY =
-        "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
-
-
-    const supabaseClient =
-        window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY
-        );
 
     let selectedProfilePictureFile = null;
+    let activeAccount = null;
     let currentProfilePictureUrl = null;
 
 
@@ -324,6 +356,8 @@
 
         return "We couldn't complete that request. Please try again.";
     }
+
+    document.getElementById("publishMusic").addEventListener("submit",publishTrack);
 
     async function signUp() {
 
@@ -405,6 +439,11 @@
                 return;
             }
 
+            const next = new URLSearchParams(location.search).get("next");
+            if (["posts","chat","inbox"].includes(next)) {
+                location.replace(next + ".html");
+                return;
+            }
             await showLoggedInUser(data.user);
         } catch (error) {
             console.error("Account sign-in failed:", error);
@@ -422,7 +461,7 @@
 
     async function logOut() {
 
-        if (!window.confirm("Log out of your Multi-Cata account?")) {
+        if (!await communityDialog("Log out of your Multi-Cata account?","Log out")) {
             return;
         }
 
@@ -447,6 +486,9 @@
             return;
         }
 
+        activeAccount = savedAppearance = currentProfilePictureUrl = selectedProfilePictureFile = null;
+        document.getElementById("password").value = "";
+        document.getElementById("publishMusic").reset();
         document.getElementById("message").textContent = "You have been logged out.";
         document.getElementById("accountMessage").textContent = "";
 
@@ -472,7 +514,11 @@
 
     async function showLoggedInUser(user) {
 
-        if (!user) return;
+        if (!user || activeAccount === user.id) return;
+        activeAccount = user.id;
+        document.getElementById("logOutButton").disabled = false;
+        document.getElementById("editProfile").disabled = true;
+        savedAppearance = null;
 
 
         document.getElementById("authArea").style.display =
@@ -502,7 +548,7 @@
     // LOAD PROFILE
     // ==========================================
 
-    async function ensureProfile(user) {
+    async function ensureProfile(user, registrationRetried = false) {
 
         const {
             data: profile,
@@ -510,9 +556,10 @@
         } = await supabaseClient
             .from("profiles")
             .select(
-                "id, username, display_name, bio, profile_picture, created_at"
+                "*"
             )
             .eq("user_id", user.id)
+            .order("username", {nullsFirst:false}).order("id").limit(1)
             .maybeSingle();
 
 
@@ -531,6 +578,8 @@
 
 
         if (profile) {
+            loadProfileOptions(profile);
+            document.getElementById("editProfile").disabled = false;
 
             document.getElementById("username").value =
                 profile.username || "";
@@ -614,11 +663,11 @@
         const { error: insertError } =
             await supabaseClient
                 .from("profiles")
-                .insert({
-
-                    user_id: user.id
-
-                });
+                .insert({user_id: user.id});
+        if (!insertError || (insertError.code === "23505" && !registrationRetried)) {
+            // Another tab may have finished this account's registration first.
+            return ensureProfile(user, true);
+        }
 
 
         if (insertError) {
@@ -640,6 +689,7 @@
     // ==========================================
 
     function showProfileSetup() {
+        if (savedAppearance) loadProfileOptions(savedAppearance);
 
         selectedProfilePictureFile = null;
 
@@ -670,6 +720,7 @@
 
     function cancelProfileEdit() {
 
+        forgetPreviewFiles();
         selectedProfilePictureFile = null;
 
         document.getElementById("profilePictureFile").value =
@@ -693,18 +744,19 @@
         const button = document.getElementById("saveProfileButton");
         button.disabled = true;
 
+        const staged = [];
         try {
-            await saveProfileChanges();
+            await saveProfileChanges(staged);
         } catch (error) {
             console.error("Profile save failed:", error);
-            document.getElementById("profileMessage").textContent =
-                "We couldn't save your profile. Please try again.";
+            document.getElementById("profileMessage").textContent = error.message || "Could not save profile.";
         } finally {
+            if (staged.length) await supabaseClient.storage.from("community-images").remove(staged);
             button.disabled = false;
         }
     }
 
-    async function saveProfileChanges() {
+    async function saveProfileChanges(staged) {
 
         const username =
             document.getElementById("username").value.trim();
@@ -761,6 +813,7 @@
         }
 
 
+        const options = await readProfileOptions(user.id, staged);
         let newProfilePictureUrl = currentProfilePictureUrl;
         let uploadedProfilePicturePath = null;
 
@@ -772,10 +825,10 @@
 
             const file = selectedProfilePictureFile;
 
-            if (!file.type.startsWith("image/")) {
+            if (!imageTypes.includes(file.type)) {
 
                 document.getElementById("profileMessage").textContent =
-                    "Please choose an image file.";
+                    "Choose a JPEG or static PNG.";
 
                 return;
 
@@ -793,13 +846,11 @@
             document.getElementById("profileMessage").textContent =
                 "Uploading profile picture...";
 
-            const extension =
-                (file.name.split(".").pop() || "jpg")
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]/g, "") || "jpg";
+            await validateImage(file);
+            const extension = file.type === "image/png" ? "png" : "jpg";
 
             const filePath =
-                user.id + "/avatar-" + Date.now() + "." + extension;
+                user.id + "/avatar-" + crypto.randomUUID() + "." + extension;
 
             const { error: uploadError } =
                 await supabaseClient
@@ -840,11 +891,14 @@
         // UPDATE PROFILE
         // ==========================================
 
+        // A lost response can follow a committed update. Only discard these uploads on a confirmed rejection.
+        const uploadedOptions = staged.splice(0);
         const { error } =
             await supabaseClient
                 .from("profiles")
                 .update({
 
+                    ...options,
                     username: username,
 
                     display_name:
@@ -857,14 +911,15 @@
                         newProfilePictureUrl || null
 
                 })
-                .eq("user_id", user.id);
+                .eq("user_id", user.id).eq("id", savedAppearance.id).select("id").single();
 
 
         if (error) {
 
+            if (error.code && /^[0-9A-Z]{5}$/.test(error.code)) staged.push(...uploadedOptions);
             // If the database update failed after a successful
             // upload, remove the newly uploaded file.
-            if (uploadedProfilePicturePath) {
+            if (uploadedProfilePicturePath && error.code && /^[0-9A-Z]{5}$/.test(error.code)) {
 
                 await supabaseClient
                     .storage
@@ -899,6 +954,11 @@
 
         }
 
+
+        const replaced = ["banner_path", "background_path"].filter(key =>
+            key in options && savedAppearance[key] && savedAppearance[key] !== options[key]
+        ).map(key => savedAppearance[key]);
+        if (replaced.length) await supabaseClient.storage.from("community-images").remove(replaced);
 
         // Delete the old avatar after the new one is safely saved.
         if (
@@ -968,6 +1028,8 @@
             );
 
 
+        const previous = preview.getAttribute("src");
+        if (previous && previous !== url && previous.startsWith("blob:")) URL.revokeObjectURL(previous);
         if (url) {
 
             preview.src = url;
@@ -979,6 +1041,7 @@
             preview.style.display = "none";
 
         }
+        refreshPreview();
 
     }
 
@@ -1005,14 +1068,14 @@
 
         }
 
-        if (!file.type.startsWith("image/")) {
+        if (!imageTypes.includes(file.type)) {
 
             input.value = "";
 
             selectedProfilePictureFile = null;
 
             document.getElementById("profileMessage").textContent =
-                "Please choose an image file.";
+                "Choose a JPEG or static PNG.";
 
             updateProfilePicturePreview(
                 currentProfilePictureUrl
@@ -1129,9 +1192,7 @@
                 session.user
             ) {
 
-                showLoggedInUser(
-                    session.user
-                );
+                setTimeout(() => showLoggedInUser(session.user), 0);
 
             }
 

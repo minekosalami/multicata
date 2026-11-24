@@ -1,0 +1,26 @@
+node_modules/
+randomAssets/
+.env
+.env.*
+!.env.example
+
+# Local review captures, historical reports and preview tools.
+_qa/**
+!_qa/**/
+!_qa/evolution/tests/fixture.js
+!_qa/evolution/tests/policies.cjs
+!_qa/evolution/tests/workflows.cjs
+!_qa/family/drift.cjs
+!_qa/family/visit.cjs
+!_qa/human/check.cjs
+!_qa/navigation/labels.cjs
+!_qa/next/adapter.js
+!_qa/next/bridge.cjs
+!_qa/next/local-db.cjs
+!_qa/next/runtime.cjs
+!_qa/next/journeys.cjs
+!_qa/next/social-policies.cjs
+!_qa/orbit/orbit-check.cjs
+!_qa/renaissance/editorial-policies.cjs
+!_qa/renaissance/interactions.cjs
+!_qa/renaissance/review.cjs

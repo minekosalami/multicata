@@ -9,7 +9,9 @@
 
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script>
 
     <style>
 
@@ -182,16 +184,20 @@
 
     </style>
 
+    <link rel="stylesheet" href="../css/community.css">
+    <link rel="stylesheet" href="../css/listening-room.css">
+<link rel="stylesheet" href="../css/renaissance.css">
 </head>
 
 
-<body>
+<body class="community-paper">
 
     <header class="site-header">
-        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
         <a class="back-button" data-back-button href="index.html">Back</a>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
+            <a href="../html/articles.html">Articles</a>
             <a href="posts.html">Posts</a>
             <a href="chat.html" aria-current="page">Chat</a>
             <a href="account.html" id="accountButton">Account</a>
@@ -199,16 +205,17 @@
     </header>
 
 
-    <div class="chat-container">
+    <main class="chat-container">
 
         <div class="chat-title">
-            Multi-Cata Chat
+            <h1>Multi-Cata Chat</h1> <a href="inbox.html">Private messages</a>
         </div>
 
         <div id="status" role="status" aria-live="polite">
             Connecting...
         </div>
 
+        <button type="button" hidden id="earlier">Load earlier messages</button>
         <div id="messages" data-empty="false"></div>
 
         <div class="input-area">
@@ -229,7 +236,7 @@
 
         </div>
 
-    </div>
+    </main>
 
 
 <script>
@@ -238,17 +245,7 @@
     // SUPABASE
     // ==========================================
 
-    const SUPABASE_URL = "https://ncmizvdipzjwiknslohn.supabase.co";
 
-    const SUPABASE_PUBLISHABLE_KEY =
-        "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
-
-
-    const supabaseClient =
-        window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY
-        );
 
 
     let currentUser = null;
@@ -282,8 +279,10 @@
 
         if (!user) {
 
-            document.getElementById("status").textContent =
-                "You must be logged in to use chat.";
+            const link = document.createElement("a");
+            link.href = "account.html?next=chat";
+            link.textContent = "Sign in to use chat";
+            document.getElementById("status").replaceChildren(link);
             document.getElementById("accountButton").textContent =
                 "Sign In";
 
@@ -312,58 +311,35 @@
     // LOAD MESSAGES
     // ==========================================
 
+    let oldestMessage;
+    const earlier = document.getElementById("earlier");
     async function loadMessages() {
-
-        const { data, error } =
-            await supabaseClient
-                .from("messages")
-                .select("*")
-                .order("created_at", {
-                    ascending: true
-                });
-
-
-        if (error) {
-
-            console.error(error);
-
-            document.getElementById("status").textContent =
-                "Could not load messages.";
-
-            return;
-
-        }
-
-
-        const messagesContainer = document.getElementById("messages");
-        messagesContainer.replaceChildren();
-
-        if (!data || data.length === 0) {
-        messagesContainer.dataset.empty = "true";
-        document.getElementById("status").textContent =
-            "No messages yet. Start the conversation.";
-        return;
-        }
-
-        messagesContainer.dataset.empty = "false";
-        document.getElementById("status").textContent = "Online";
-
-
-        for (const message of data) {
-
-            await displayMessage(message);
-
-        }
-
-
-        scrollToBottom();
-
+        earlier.disabled = true;
+        let query = supabaseClient.from("messages").select("*").order("created_at",{ascending:false}).order("id",{ascending:false}).limit(100);
+        if (oldestMessage) query = query.or("created_at.lt." + oldestMessage.created_at + ",and(created_at.eq." + oldestMessage.created_at + ",id.lt." + oldestMessage.id + ")");
+        try {
+            const {data, error} = await query;
+            if (error) throw error;
+            const authors = [...new Set(data.map(m => m.user_id).filter(Boolean))];
+            const {data: profiles} = authors.length ? await supabaseClient.from("profiles").select("user_id,username,profile_picture").in("user_id",authors) : {};
+            const people = new Map((profiles || []).map(p => [p.user_id,p]));
+            const messages = document.getElementById("messages");
+            const previousHeight = messages.scrollHeight;
+            const fragment = document.createDocumentFragment();
+            for (const message of data.slice().reverse()) {
+                const profile = people.get(message.user_id);
+                await displayMessage(message, {username:profile?.username || "Unknown User",profile_picture:profile?.profile_picture},fragment);
+            }
+            messages.prepend(fragment);
+            if (oldestMessage) messages.scrollTop += messages.scrollHeight - previousHeight;
+            else scrollToBottom();
+            oldestMessage = data.at(-1) || oldestMessage;
+            earlier.hidden = data.length < 100;
+            document.getElementById("status").textContent = oldestMessage ? "Online" : "No messages yet.";
+        } catch { document.getElementById("status").textContent = "Could not load messages."; }
+        finally { earlier.disabled = false; }
     }
-
-
-    // ==========================================
-    // GET PROFILE
-    // ==========================================
+    earlier.onclick = loadMessages;
 
     async function getProfile(userId) {
 
@@ -372,6 +348,7 @@
                 .from("profiles")
                 .select("username, profile_picture")
                 .eq("user_id", userId)
+                .order("username", {nullsFirst:false}).order("id").limit(1)
                 .maybeSingle();
 
 
@@ -401,10 +378,11 @@
     // DISPLAY MESSAGE
     // ==========================================
 
-    async function displayMessage(message) {
-
-        const profile =
-            await getProfile(message.user_id);
+    const displayed = new Set();
+    async function displayMessage(message, profile, destination = document.getElementById("messages")) {
+        if (displayed.has(message.id)) return;
+        displayed.add(message.id);
+        profile ??= await getProfile(message.user_id);
 
 
         const messageElement =
@@ -520,9 +498,7 @@
         messageElement.appendChild(timeElement);
 
 
-        document
-            .getElementById("messages")
-            .appendChild(messageElement);
+        destination.append(messageElement);
         document.getElementById("messages").dataset.empty = "false";
 
     }
@@ -533,6 +509,7 @@
     // ==========================================
 
     async function sendMessage() {
+        if (document.getElementById("sendButton").disabled) return;
 
         const input =
             document.getElementById("messageInput");
@@ -599,7 +576,7 @@
 
     function setupRealtime() {
 
-        supabaseClient
+        const channel = supabaseClient
             .channel("chat-room")
 
             .on(
@@ -626,6 +603,7 @@
             )
 
             .subscribe();
+        window.addEventListener("playerhost", () => supabaseClient.removeChannel(channel), {once:true});
 
     }
 
@@ -696,8 +674,8 @@
 
 
         try {
-            await loadMessages();
             setupRealtime();
+            await loadMessages();
         } catch (error) {
             console.error("Could not start chat:", error);
             document.getElementById("status").textContent =

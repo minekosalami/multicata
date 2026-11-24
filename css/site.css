@@ -114,3 +114,84 @@ button:disabled {
         transition-duration: 0.01ms !important;
     }
 }
+
+.player-page { position:fixed; inset:0; width:100%; height:100%; border:0; z-index:10; background:white; }
+.player-panel { position:fixed; right:0; z-index:20; width:min(100%, 22rem); padding:12px; box-sizing:border-box; background:#1a1a1a; color:white; font:1rem/1.4 Arial,sans-serif; }
+.player-panel:not([hidden]) { display:grid; gap:8px; }
+.player-panel audio { width:100%; }
+.site-nav .player-toggle { margin:0; border:1px solid #666; border-radius:7px; background:#303030; color:white; padding:8px 12px; font:inherit; cursor:pointer; }
+.attached-image,.profile-banner { display:block; max-width:100%; max-height:28rem; object-fit:contain; }
+.profile-banner { margin:auto; }
+#appearance label,.composer label,#publishMusic label,.inbox label,.inbox textarea { display:block; margin-block:0.6rem; }
+.inbox { margin:0; font:1rem/1.5 Arial,sans-serif; color:#eee; background:#171717; }
+.inbox main { max-width:46rem; margin:auto; padding:1rem; }
+.inbox main a,.chat-title a { color:#c8a6e8; }
+#threads a { display:block; }
+#history { padding:0; list-style:none; }
+#history li { border-bottom:1px solid #555; padding:0.75rem 0; }
+#history p,.post-content,#recentPosts { overflow-wrap:anywhere; white-space:pre-wrap; }
+.inbox textarea { width:100%; box-sizing:border-box; }
+[hidden] { display:none !important; }
+
+#latestMusic a { display:block; }
+#grasscats-pop a { color:#cfb6e4; }
+
+.profile-page .profile-card::before { background:var(--profile-accent,var(--accent)); }
+.profile-page a { overflow-wrap:anywhere; }
+.profile-page > section:not(.profile-card) { background:var(--surface,#1a1a1a); padding:1rem; }
+.profile-page section a { color:#c8dcd3; }
+#appearance input,#appearance textarea,#publishMusic input,#publishMusic textarea,.composer input,.composer select { max-width:100%; box-sizing:border-box; }
+
+/* One compact masthead for the catalogue, artist pages and community tools. */
+.site-header { padding:8px max(16px,calc((100% - 70rem)/2)); background:#211c23; border-bottom:3px solid #a977ac; font-family:Arial,sans-serif; }
+.site-header .site-brand { font:italic bold 1.6rem Georgia,serif; letter-spacing:-.06em; color:#fff7fc; }
+.site-header .site-nav { align-items:center; gap:4px; }
+.site-header .site-nav a,.site-header .back-button,.site-header .player-toggle { box-sizing:border-box; min-height:40px; padding:8px 12px; font:600 .9rem Arial,sans-serif; border:1px solid transparent; border-radius:2px; }
+.site-header .site-nav a,.site-header .back-button { background:transparent; color:#eee6ee; }
+.site-header .site-nav a:hover,.site-header .back-button:hover { background:#3a303c; }
+.site-header .site-nav a[aria-current=page] { border-bottom-color:#e2b6e1; }
+.site-header .player-toggle { background:#443346; color:white; order:1; }
+.site-header .player-toggle[data-playing=true] { border-color:#dcaddb; }
+.player-panel { box-shadow:0 6px 16px #0003; background:#29232b; border-bottom:3px solid #bf8dbc; padding:16px; text-align:left; }
+.player-panel span { font:600 1rem/1.4 Arial,sans-serif; }
+.player-panel button { width:fit-content; justify-self:end; margin:0; cursor:pointer; color:#f7ebf8; background:transparent; border:0; padding:8px; font:inherit; text-decoration:underline; }
+#posts > a,#publishMusic a,.account-content a:not(.profile-link) { color:#e8c8e9; text-underline-offset:3px; }
+#publishMusic,#appearance { max-width:34rem; margin:1rem auto; text-align:left; }
+#publishMusic label,#appearance label { margin:.85rem 0; }
+#publishMusic input,#publishMusic textarea,#appearance input:not([type=checkbox]),#appearance textarea { display:block; width:100%; margin:.25rem 0; }
+#publishMusic button,#appearance input[type=color] { width:auto; }
+.profile-page article[id^=track-] { border-top:1px solid #5d605d; padding:.8rem 0; }
+.profile-page article h4 { margin:0 0 .5rem; font:600 1.2rem Georgia,serif; }
+@media(max-width:700px) {
+  .site-header { position:relative; padding:8px 12px 4px; gap:4px 8px; }
+  .site-header .site-brand { min-height:40px; display:inline-flex; align-items:center; margin-right:0; }
+  .site-header .back-button { margin-left:0; font-size:.8rem; padding-inline:7px; max-width:8rem; }
+  .site-header .site-nav { width:100%; gap:2px; }
+  .site-header .site-nav a { flex:1; padding:6px; min-width:0; overflow-wrap:anywhere; text-align:center; }
+  .site-header .player-toggle { position:absolute; right:12px; top:8px; width:auto; max-width:8rem; }
+}
+
+.site-header { position:sticky; top:0; }
+html { scroll-padding-top:7rem; }
+.profile-information h1 { margin:0; }
+.skip-link { position:fixed; top:.3rem; left:.5rem; z-index:25; transform:translateY(-150%); }
+.skip-link:focus { transform:none; background:white; color:#322237; padding:.65rem; }
+
+.member-menu {position:relative;font:600 .9rem Arial,sans-serif;color:#f5edf4;}
+.member-menu>summary {display:flex;align-items:center;min-height:40px;cursor:pointer;padding:0 .55rem;list-style:none;}
+.member-menu>summary::after {content:"▾";padding-left:.25rem;}
+.member-menu[open]>div {position:absolute;right:0;top:100%;z-index:4;min-width:11rem;background:#211c23;padding:.4rem;border:1px solid #776978;}
+.site-nav .member-menu a {display:flex;justify-content:flex-start;}
+
+@media(max-width:700px){
+ .site-header>.site-nav {display:grid;grid-template-columns:auto auto auto minmax(0,1fr) auto;gap:0;align-items:center;}
+ .site-header>.site-nav>a {display:block;line-height:40px;min-height:40px;padding:0 .4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+ .site-header>.site-nav>.member-menu {grid-column:-2;}
+ .site-header>.site-nav>.member-menu a {display:flex;min-height:44px;}
+ .site-header .back-button {max-width:6rem;line-height:1.1;}
+}
+
+@media(max-width:375px){
+ .site-header>.site-nav>a {padding-inline:.2rem;}
+ .site-header>.site-nav>.member-menu>summary {padding-inline:.15rem;}
+}

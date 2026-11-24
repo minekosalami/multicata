@@ -5,11 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Multi-Cata Posts</title>
+    <title>All Posts · Multi-Cata</title>
 
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script>
 
     <style>
 
@@ -162,18 +164,25 @@
 
     </style>
 
+<script src="../js/community.js"></script>
+    <script src="../js/music.js"></script>
+    <link rel="stylesheet" href="../css/community.css">
+    <link rel="stylesheet" href="../css/listening-room.css">
+    <script src="../js/social.js"></script>
+<link rel="stylesheet" href="../css/renaissance.css">
 </head>
 
 
-<body>
+<body class="community-paper">
 
     <!-- TOP BAR -->
 
     <header class="site-header">
-        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
         <a class="back-button" data-back-button href="index.html">Back</a>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
+            <a href="../html/articles.html">Articles</a>
             <a href="posts.html" aria-current="page">Posts</a>
             <a href="chat.html">Chat</a>
             <a href="account.html" id="accountButton">Account</a>
@@ -185,12 +194,12 @@
 
     <main class="container">
 
-        <h1>Posts</h1>
+        <h1>All Posts</h1><label id="feed-sort" hidden>Show <select id="post-filter"><option value="all">All posts</option><option value="following">Following</option></select></label>
 
 
-        <div class="composer">
+        <div class="composer" hidden>
 
-            <label for="postContent">Share a post</label>
+            <label for="postContent">Write a post</label>
             <textarea
                 id="postContent"
                 maxlength="1000"
@@ -199,6 +208,8 @@
             ></textarea>
             <p id="postHelp">Posts can contain up to 1,000 characters.</p>
 
+            <label>Image <input id="postImage" type="file" accept="image/jpeg,image/png"></label>
+            <label>Music <select id="postTrack"><option value="">None</option><option value="grasscats-pop">GrassCats Pop &middot; LLiosette</option></select></label>
             <button id="postButton">
                 Post
             </button>
@@ -231,19 +242,7 @@
     // SUPABASE
     // ==========================================
 
-    const SUPABASE_URL =
-        "https://ncmizvdipzjwiknslohn.supabase.co";
 
-
-    const SUPABASE_PUBLISHABLE_KEY =
-        "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
-
-
-    const supabaseClient =
-        supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY
-        );
 
 
     const postContent =
@@ -283,6 +282,7 @@
                 .from("profiles")
                 .select("username")
                 .eq("user_id", user.id)
+                .order("username", {nullsFirst:false}).order("id").limit(1)
                 .maybeSingle();
 
             if (profileError) {
@@ -307,16 +307,24 @@
 
     async function loadPosts() {
 
-        const {
-            data: posts,
-            error: postsError
-        } = await supabaseClient
-            .from("posts")
-            .select("*")
-            .order("created_at", {
-                ascending: false
-            });
-
+        const {data: {user: viewer}} = await supabaseClient.auth.getUser();
+        document.getElementById("feed-sort").hidden = !viewer || new URLSearchParams(location.search).has("post");
+        document.querySelector(".composer").hidden = !viewer;
+        if (!viewer) {
+            const link = document.createElement("a");
+            link.href = "account.html?next=posts";
+            link.textContent = "Sign in to view posts.";
+            postsContainer.replaceChildren(link);
+            return;
+        }
+        const choice = document.getElementById("post-filter").value;
+        const selected = new URLSearchParams(location.search).get("post");
+        let query = supabaseClient.from("posts").select("*").order("created_at",{ascending:false});
+        if (selected) query=query.eq("id",selected);
+        else if (choice==="following") {
+            query=supabaseClient.rpc("followed_posts");
+        }
+        const {data:posts,error:postsError}=await query;
 
         if (postsError) {
 
@@ -332,8 +340,29 @@
 
         if (!posts || posts.length === 0) {
 
-            postsContainer.innerHTML =
-                '<div class="no-posts">No posts yet. Be the first to share something.</div>';
+            const empty = document.createElement("div");
+            empty.className = "no-posts";
+            empty.textContent = selected ? "This post is unavailable." :
+                choice === "following" ? "No posts from people you follow yet." :
+                "No posts yet. Be the first to share something.";
+            if (selected) {
+                const all = document.createElement("a");
+                all.href = "posts.html";
+                all.textContent = "Show all posts";
+                empty.append(" ", all);
+            } else if (choice === "following") {
+                const all = document.createElement("button");
+                all.type = "button";
+                all.textContent = "Show all posts";
+                all.onclick = () => {
+                    const filter = document.getElementById("post-filter");
+                    filter.value = "all";
+                    filter.focus();
+                    filter.dispatchEvent(new Event("change"));
+                };
+                empty.append(" ", all);
+            }
+            postsContainer.replaceChildren(empty);
 
             return;
 
@@ -415,6 +444,7 @@
         // CREATE POSTS
         // ==========================================
 
+        await attachTrackDetails(posts);
         for (const post of posts) {
 
             const profile =
@@ -560,8 +590,7 @@
             content.className =
                 "post-content";
 
-            content.textContent =
-                post.content;
+            MC.mentions(content,post.content);
 
 
             // ======================================
@@ -577,6 +606,10 @@
             );
 
 
+            postElement.id="post-"+post.id;
+            renderPostMedia(postElement, post);
+            postElement.append(MC.discussion("post",post.id,viewer,post.user_id));
+            postActions(postElement, post, viewer, loadPosts);
             postsContainer.appendChild(
                 postElement
             );
@@ -596,7 +629,9 @@
             postContent.value.trim();
 
 
-        if (!content) {
+        const image = document.getElementById("postImage");
+        const track = document.getElementById("postTrack");
+        if (!content && !image.files.length && !track.value) {
 
             message.textContent =
                 "Write something first.";
@@ -623,24 +658,33 @@
         }
 
 
+        if (postButton.disabled) return;
         postButton.disabled = true;
         message.textContent = "Posting...";
 
         try {
+        const extras = {};
+        if (track.value === "grasscats-pop") extras.track = track.value;
+        else if (track.value) extras.track_id = track.value;
+        if (image.files[0]) extras.image_path = await uploadCommunityImage(user.id, image.files[0], "post-images");
         const { error } = await supabaseClient
             .from("posts")
             .insert({
                 user_id: user.id,
+                ...extras,
                 content: content
             });
 
         if (error) {
             console.error(error);
-            message.textContent =
-                "Your post could not be published. Please try again.";
+            if (extras.image_path && error.code && /^[0-9A-Z]{5}$/.test(error.code)) {
+                await supabaseClient.storage.from("post-images").remove([extras.image_path]);
+            }
+            message.textContent = "Your post could not be published. Please try again.";
             return;
         }
 
+        image.value = track.value = "";
         postContent.value = "";
         message.textContent = "Your post has been published.";
         await loadPosts();
@@ -669,6 +713,9 @@
     // INITIAL LOAD
     // ==========================================
 
+    if (new URLSearchParams(location.search).get("track") === "grasscats-pop") document.getElementById("postTrack").value = "grasscats-pop";
+    loadTrackChoices();
+    document.getElementById("post-filter").onchange=()=>loadPosts().catch(()=>{postsContainer.textContent="Could not load posts.";});
     updateAccountButton();
     loadPosts().catch(function (error) {
         console.error("Could not load posts:", error);

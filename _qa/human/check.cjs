@@ -1,0 +1,91 @@
+const {chromium}=require('playwright');
+const {database,asUser,ids}=require('../next/local-db.cjs');
+const {server,openVisitor}=require('../next/runtime.cjs');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+(async()=>{
+ const db=await database(),errors=[],checks=[];
+ const browser=await chromium.launch({channel:'chrome',args:['--autoplay-policy=no-user-gesture-required']});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const base='http://127.0.0.1:'+server.address().port+'/html/';
+ const snap=(p,name)=>p.screenshot({path:path.join(__dirname,name+'.jpg'),quality:88});
+ try {
+ const p=await openVisitor(browser,db,errors,ids[0],360);
+ await p.route('**/storage/v1/object/public/community-images/**',r=>r.fulfill({contentType:'image/jpeg',path:path.resolve('images/nart.jpeg')}));
+ await p.goto(base+'account.html');await p.locator('#editProfile').click();
+ await p.locator('#text_color').fill('#eeeeee');await p.locator('#saveProfileButton').click();
+ await p.locator('#profileMessage').filter({hasText:'darker'}).waitFor();
+ await p.locator('#background_path').setInputFiles({name:'invalid.png',mimeType:'image/png',buffer:Buffer.from('not an image')});
+ await p.locator('#profileMessage').filter({hasText:'valid JPEG'}).waitFor();
+ await p.locator('#bio').fill('Local profile preview');await p.locator('#text_color').fill('#432951');
+ await p.locator('#border_color').fill('#865383');await p.locator('#background_color').fill('#b8d6bc');await p.locator('#accent_color').fill('#526e92');
+ for(const key of ['background_path','banner_path'])await p.locator('#'+key).setInputFiles('images/nart.jpeg');
+ await p.waitForFunction(()=>document.querySelector('#appearancePreview').style.backgroundImage.includes('blob:') && document.querySelector('#appearancePreview .profile-banner').naturalWidth>0);
+ await p.locator('#appearancePreview').scrollIntoViewIfNeeded();await snap(p,'profile-preview');
+ assert.equal(await p.locator('.identity-preview').evaluate(el=>getComputedStyle(el).color),'rgb(67, 41, 81)');
+ await p.locator('#saveProfileButton').click();await p.getByText('Profile saved!',{exact:true}).waitFor();
+ await p.locator('#viewProfileButton').click();await p.locator('.profile-page .bio').filter({hasText:'Local profile preview'}).waitFor();
+ const theme=await p.locator('.profile-card').evaluate(el=>({text:getComputedStyle(el.querySelector('.bio')).color,border:getComputedStyle(el).borderTopColor,background:document.body.style.backgroundImage,overflow:document.documentElement.scrollWidth-innerWidth}));
+ assert.equal(theme.text,'rgb(67, 41, 81)');assert.equal(theme.border,'rgb(134, 83, 131)');assert(theme.background.includes(ids[0]));assert.equal(theme.overflow,0);
+ await snap(p,'profile-saved');checks.push({savedTheme:theme});
+ await p.goto(base+'account.html');await p.locator('#editProfile').click();
+ await p.locator('#clearBackground').check();await p.locator('#clearBanner').check();await p.locator('#border_color').fill('');await p.locator('#text_color').fill('');
+ await p.locator('#saveProfileButton').click();await p.getByText('Profile saved!',{exact:true}).waitFor();await p.locator('#viewProfileButton').click();
+ await p.locator('.profile-page .bio').waitFor();assert.equal(await p.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(184, 214, 188)');
+ const run=(id,sql,args)=>asUser(db,id,tx=>tx.query(sql,args));
+ assert.equal((await run(ids[1],"update profiles set border_color='#000000' where user_id=$1 returning id",[ids[0]])).rows.length,0);
+ await assert.rejects(run(ids[0],"update profiles set text_color='invalid' where user_id=$1",[ids[0]]));
+ await assert.rejects(run(ids[1],"insert into storage.objects values('community-images',$1)",[ids[0]+'/test.jpg']));
+ const [saved]=(await db.query('select border_color,text_color,banner_path,background_path from profiles where user_id=$1',[ids[0]])).rows;
+ assert(Object.values(saved).every(v=>v===null));checks.push('Reset saved; another member could not update the profile or upload to its image folder. Invalid hex rejected in the database.');
+ const guest=await openVisitor(browser,db,errors,null,360);
+ await guest.goto(base+'account.html');await guest.locator('#signUpButton').click();await guest.getByText('Enter your email address and password to create an account.').waitFor();await snap(guest,'registration');
+ await guest.goto(base+'track.html?id='+ids[0].replace(/1$/,'9'));await guest.getByText('Recording unavailable.').waitFor();
+ checks.push('Guest registration validation and unavailable recording rendered.');
+ const account=await browser.newPage({viewport:{width:360,height:780}});
+ const sdk=fs.readFileSync(path.join(__dirname,'../evolution/tests/fixture.js'),'utf8');
+ await account.route('**/*',r=>{
+    if(r.request().url().startsWith('https://cdn.jsdelivr.net/')){
+        // No realtime service in the fixture. Exercise chat history and sending through reload.
+        const channel='channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{},';
+        return r.fulfill({contentType:'text/javascript',body:sdk.replace('({auth:{','({'+channel+'auth:{')});
+    }
+    return r.request().url().startsWith('http://127.0.0.1:')?r.continue():r.abort();
+ });
+ await account.goto(base+'../index.html');await account.waitForURL('**/html/index.html');
+ await account.goto(base+'account.html');await account.locator('#email').fill('local@example.test');await account.locator('#password').fill('local-example-password');
+ await account.locator('#signUpButton').click();await account.getByText('Account created! Check your email to verify it.').waitFor();
+ await account.locator('#logInButton').click();await account.locator('#editProfile').waitFor();
+ await account.goto(base+'chat.html');await account.getByText('No messages yet.').waitFor();
+ await account.locator('#messageInput').fill('Local chat check');await account.locator('#sendButton').click();await account.getByText('Online',{exact:true}).waitFor();
+ await account.reload();await account.locator('.message-text').filter({hasText:'Local chat check'}).waitFor();await snap(account,'chat-history');
+ await account.close();checks.push('Root redirect, registration confirmation, login and community chat send/history passed with fixture auth and a local message store.');
+ await p.goto(base+'index.html');await p.locator('.drift-lane').scrollIntoViewIfNeeded();
+ await p.waitForFunction(()=>document.querySelector('.drift-running'));
+ const evidence=await p.locator('.drift-lane').evaluate(el=>{
+   const styles=pseudo=>getComputedStyle(el,pseudo);
+   const a=el.getAnimations({subtree:true}).filter(a=>a.animationName==='pixel-shift');a.forEach(x=>{x.pause();x.currentTime=x.effect.getTiming().duration*.43;});
+   return {count:a.length,pointer:styles('::before').pointerEvents,opacity:styles('::before').opacity,width:styles('::before').width,shadow:styles('::before').boxShadow};
+ });
+ assert.equal(evidence.count,2);assert.equal(evidence.pointer,'none');assert.equal(evidence.opacity,'0.23');await snap(p,'pixels-visible');
+ await p.emulateMedia({reducedMotion:'reduce'});assert.equal(await p.locator('.drift-lane').evaluate(el=>getComputedStyle(el,'::before').animationName),'none');
+ await p.emulateMedia({reducedMotion:'no-preference'});await p.locator('.member-menu summary').click();await p.getByRole('button',{name:'Reduce effects',exact:true}).click();
+ assert.equal(await p.locator('.drift-lane').evaluate(el=>getComputedStyle(el,'::after').animationName),'none');
+ await p.keyboard.press('Escape');checks.push({pixels:evidence});
+ await p.getByRole('button',{name:'Play GrassCats Pop',exact:true}).click();await p.locator('.slow-dial').press('Home');await p.getByRole('button',{name:'Close player controls'}).click();
+ await p.evaluate(async()=>{
+    const sound=new AudioContext(),meter=sound.createAnalyser();
+    sound.createMediaElementSource(document.querySelector('audio')).connect(meter).connect(sound.destination);
+    await sound.resume();window.signal=()=>{const data=new Uint8Array(meter.fftSize);meter.getByteTimeDomainData(data);return data.some(sample=>Math.abs(sample-128)>2);};
+ });
+ await p.waitForFunction(()=>window.signal());
+ await p.locator('.record-row').first().getByRole('button',{name:/^Queue /}).click();
+ await p.evaluate(()=>{const a=document.querySelector('audio');window.savedAudio=a;window.mediaStart=a.currentTime;window.events=[];for(const type of ['emptied','loadstart','seeking','pause'])a.addEventListener(type,()=>window.events.push(type));});
+ await p.locator('.art-link[href="characters.html"]').click();const frame=p.frameLocator('.player-page');await frame.getByRole('button',{name:'Nart',exact:true}).waitFor();
+ await frame.locator('[data-back-button]').click();await frame.locator('.drift-lane').waitFor();await p.goForward();await frame.getByRole('button',{name:'Nart',exact:true}).waitFor();
+ await p.goBack();await frame.locator('.drift-lane').waitFor();await frame.locator('.player-toggle').click();await p.locator('.player-panel summary').filter({hasText:'Queue · 1'}).waitFor();
+ await p.waitForFunction(()=>window.signal());
+ const audio=await p.evaluate(()=>({same:window.savedAudio===document.querySelector('audio'),playing:!savedAudio.paused,rate:savedAudio.playbackRate,advanced:savedAudio.currentTime-mediaStart,events,measuredOutput:true}));
+ assert(audio.same && audio.playing && audio.advanced>0 && audio.rate===.5);assert.deepEqual(audio.events,[]);checks.push({internalBackAndHistory:audio});
+ assert.deepEqual(errors,[]);console.log(checks);
+ } finally{fs.writeFileSync(path.join(__dirname,'checks.json'),JSON.stringify({checks,errors},null,2));await browser.close();server.close();await db.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
