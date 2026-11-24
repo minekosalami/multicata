@@ -83,9 +83,9 @@
                 );
                 if (error) throw error;
                 showCode();
-                status.textContent = 'If this address has a Multi-Cata account, check your email for a reset code.';
+                status.textContent = 'If this address has a Multi-Cata account, follow the link in your email or enter the code below.';
             } catch {
-                status.textContent = 'Could not request a code. Wait a moment and try again.';
+                status.textContent = 'Could not request a reset email. Wait a moment and try again.';
             } finally { button.disabled = false; }
         };
         change.onsubmit = async event => {
