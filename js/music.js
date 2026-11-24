@@ -59,6 +59,70 @@ async function loadTrackChoices() {
     if (Array.from(select.options).some(option => option.value === selected)) select.value = selected;
 }
 
+async function validateAudioContainer(blob) {
+    // M4A and Ogg share containers with video. Inspect local metadata without playing the file.
+    const media = document.createElement("video");
+    const url = URL.createObjectURL(blob);
+    let timeout;
+    try {
+        await new Promise((resolve, reject) => {
+            const unreadable = () => reject(new Error("This browser could not read the recording. Try another audio export."));
+            timeout = setTimeout(unreadable, 15000);
+            media.onloadedmetadata = resolve;
+            media.onerror = unreadable;
+            media.preload = "metadata";
+            media.src = url;
+        });
+        if (media.videoWidth || media.videoHeight) throw new Error("Choose an audio-only recording.");
+    } finally {
+        clearTimeout(timeout);
+        media.onloadedmetadata = media.onerror = null;
+        media.removeAttribute("src");
+        media.load();
+        URL.revokeObjectURL(url);
+    }
+}
+
+async function recordingUpload(file) {
+    const extension = /\.([a-z0-9]+)$/i.exec(file?.name || "")?.[1].toLowerCase();
+    const mimeTypes = {mp3:"audio/mpeg", wav:"audio/wav", flac:"audio/flac", m4a:"audio/mp4",
+        ogg:"audio/ogg", oga:"audio/ogg", opus:"audio/ogg"};
+    if (!Object.hasOwn(mimeTypes, extension)) throw new Error("Choose an MP3, WAV, FLAC, M4A, or Ogg audio file.");
+    if (file.size > 20 * 1024 * 1024) throw new Error("Choose a song that is 20 MB or smaller.");
+
+    const bytes = new Uint8Array(await file.slice(0, 300).arrayBuffer());
+    const header = String.fromCharCode(...bytes);
+    const mime = mimeTypes[extension];
+    let matches;
+    switch (mime) {
+        case "audio/mpeg":
+            matches = header.startsWith("ID3") || (bytes[0] === 255 && (bytes[1] & 224) === 224);
+            break;
+        case "audio/wav":
+            matches = header.startsWith("RIFF") && header.startsWith("WAVE", 8);
+            break;
+        case "audio/flac":
+            matches = header.startsWith("fLaC");
+            break;
+        case "audio/mp4":
+            matches = header.startsWith("ftyp", 4);
+            break;
+        case "audio/ogg": {
+            // The first packet follows the Ogg page header and its segment table.
+            const packet = 27 + bytes[26];
+            matches = header.startsWith("OggS") && (header.startsWith("OpusHead", packet) ||
+                (extension !== "opus" && header.startsWith("\x01vorbis", packet)));
+            break;
+        }
+    }
+    if (!matches) throw new Error("The file contents do not match the ." + extension + " extension.");
+
+    // Multipart storage uploads use the Blob MIME type, which file pickers may omit or mislabel.
+    const body = file.slice(0, file.size, mime);
+    if (mime === "audio/mp4" || mime === "audio/ogg") await validateAudioContainer(body);
+    return {extension, mime, body};
+}
+
 async function publishTrack(event) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -71,17 +135,14 @@ async function publishTrack(event) {
         const title = fields.title.value.trim();
         const file = fields.recording.files[0];
         if (!title) throw new Error("Enter a track title.");
-        if (!file || !/\.mp3$/i.test(file.name)) throw new Error("Choose an MP3 file.");
-        if (file.size > 20 * 1024 * 1024) throw new Error("Choose a song that is 20 MB or smaller.");
-        const bytes = new Uint8Array(await file.slice(0,3).arrayBuffer());
-        if (!(bytes[0] === 255 && (bytes[1] & 224) === 224) && String.fromCharCode(...bytes) !== "ID3") throw new Error("This file is not an MP3.");
+        const recording = await recordingUpload(file);
         const {data:{user}} = await supabaseClient.auth.getUser();
         if (!user) throw new Error("Sign in to publish music.");
-        const path = user.id + "/" + crypto.randomUUID() + ".mp3";
+        const path = user.id + "/" + crypto.randomUUID() + "." + recording.extension;
         status.textContent = "Uploading recording…";
         const bucket = supabaseClient.storage.from("creator-music");
         const art = fields.art.files[0] ? await uploadCommunityImage(user.id,fields.art.files[0]) : null;
-        const uploaded = await bucket.upload(path,file,{contentType:"audio/mpeg"});
+        const uploaded = await bucket.upload(path, recording.body, {contentType:recording.mime});
         if (uploaded.error) {if(art)await supabaseClient.storage.from("community-images").remove([art]);throw new Error("Upload failed. Please try again.");}
         const published = await supabaseClient.from("tracks").insert({user_id:user.id,title,
             release_name:fields.releaseName.value.trim() || null,credits:fields.credits.value.trim() || null,...(art?{art_path:art}:{}),audio_path:path}).select("id").single();

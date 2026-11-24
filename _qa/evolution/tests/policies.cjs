@@ -32,5 +32,14 @@ await run("insert into posts(id,user_id,content) values('"+a+"','"+a+"','draft')
 await login(a);const path=a+'/'+c+'.mp3';await run("insert into storage.objects values('creator-music','"+path+"')");
 await run("insert into tracks(user_id,title,audio_path) values('"+a+"','Test','"+path+"')");
 await login(b);await assert.rejects(run("insert into storage.objects values('creator-music','"+path+"')"));await assert.rejects(run("insert into tracks(user_id,title,audio_path) values('"+a+"','Test2','"+path+"')"));
-await run("reset role;set role anon");assert.equal((await rows('select title from tracks')).length,1);await assert.rejects(rows('select * from private_messages'));await db.close();console.log('All workspace migrations and legacy cross-account policy checks passed');
+await run("reset role;set role anon");assert.equal((await rows('select title from tracks')).length,1);await assert.rejects(rows('select * from private_messages'));
+await login(a);
+for (const extension of ['wav','flac','m4a','ogg','oga','opus','txt']) {
+  const recordingPath=a+'/'+c+'.'+extension;
+  await db.query("insert into storage.objects values('creator-music',$1)",[recordingPath]);
+  const publish=()=>db.query("insert into tracks(user_id,title,audio_path) values($1,'Format test',$2)",[a,recordingPath]);
+  if(extension==='txt') await assert.rejects(publish,{code:'23514'});
+  else await publish();
+}
+await db.close();console.log('All workspace migrations and legacy cross-account policy checks passed');
 })().catch(e=>{console.error(e.message,e.detail);process.exitCode=1})

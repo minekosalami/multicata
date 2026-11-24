@@ -54,7 +54,7 @@ const {openVisitor,server}=require('../next/runtime.cjs');
                     await writer.locator('[name=title]').fill('QA rejected recording');
                     await writer.locator('[name=recording]').setInputFiles({name:'sample.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('invalid audio')});
                     await writer.getByRole('button',{name:'Publish track'}).click();
-                    await writer.getByText('This file is not an MP3.',{exact:true}).waitFor();
+                    await writer.getByText('The file contents do not match the .mp3 extension.',{exact:true}).waitFor();
                     assert.equal(await writer.locator('[name=title]').inputValue(),'QA rejected recording');
                     assert(await writer.getByRole('button',{name:'Publish track'}).isEnabled());
                 });
