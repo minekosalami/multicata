@@ -24,19 +24,6 @@
     pick();
     window.addEventListener("pageshow", e => { if (e.persisted) pick(); });
 
-    // Keep the stacked widgets in the same order for touch, keyboard and reading.
-    const stacked = matchMedia("(max-width:740px)");
-    const reading = document.querySelector("#reading");
-    function orderWidgets() {
-        const next = document.querySelector(stacked.matches ? "#chats" : "#posts");
-        if (reading.nextElementSibling === next) return;
-        const focused = reading.contains(document.activeElement) ? document.activeElement : null;
-        next.before(reading);
-        focused?.focus({preventScroll:true});
-    }
-    orderWidgets();
-    stacked.addEventListener("change", orderWidgets);
-
     const lane = document.querySelector(".drift-lane");
     const field = document.querySelector(".logo-field");
     const firstTrack = field.firstElementChild;

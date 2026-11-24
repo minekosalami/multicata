@@ -22,6 +22,27 @@
     directory();
     try {
         const user=await viewer();
+        const grid=document.querySelector(".portal-grid"),widgets=[...grid.querySelectorAll(":scope > section")];
+        const scope="mc-home:"+(user?.id||"guest")+":";
+        const settings=node("details"),choices=node("div");settings.append(node("summary","Customize homepage"),choices);
+        document.querySelector(".flight-index").append(settings);
+        function arrange(){
+            const pinned=widgets.filter(w=>localStorage.getItem(scope+w.id+":pin"));
+            grid.append(...pinned,...widgets.filter(w=>!pinned.includes(w)));
+        }
+        for(const w of widgets){
+            const title=w.querySelector("h2").textContent;
+            for(const [action,label] of [["pin","Pin"],["collapse","Collapse"]]){
+                const key=scope+w.id+":"+action,field=node("label"),box=node("input");
+                box.type="checkbox";box.checked=Boolean(localStorage.getItem(key));field.append(box," "+label+" "+title);choices.append(field);
+                function apply(){if(action==="collapse")w.classList.toggle("collapsed-widget",box.checked);else arrange();}
+                box.onchange=()=>{if(box.checked)localStorage.setItem(key,"1");else localStorage.removeItem(key);apply();};apply();
+            }
+        }
+        if(user){
+            const {data}=await supabaseClient.from("articles").select("id,title").eq("author",user.id).eq("published",false).order("updated_at",{ascending:false}).limit(1).maybeSingle();
+            if(data || localStorage.getItem("mc-writing:"+user.id+":new"))document.querySelector(".update-strip").append(link("Continue your draft",data?"writing.html?edit="+data.id:"writing.html"));
+        }
         // Shared-browser sign-out or an account switch also invalidates private previews.
         supabaseClient.auth.onAuthStateChange((event,session)=>{
             if(event!=="SIGNED_OUT" && event!=="SIGNED_IN")return;
@@ -37,7 +58,14 @@
         }
         await Promise.all([
             (async()=>{
+                const notices=await rpc("notice_feed");
+                const count=notices.filter(n=>n.kind==="reply"&&!n.seen).length;
+                if(count)document.querySelector("#chats footer").append(link(count+(count===1?" unread reply":" unread replies"),"notices.html"));
+            })().catch(()=>{}),
+            (async()=>{
                 const rows=await rpc("home_threads");
+                const unread=rows.reduce((n,r)=>n+Number(r.unread||0),0);
+                if(unread)document.querySelector("#chats h2").append(" ("+unread+" unread)");
                 if (!rows.length) {inbox.append(node("p","No conversations yet. Visit a member’s profile to start one."));return;}
                 for(const row of rows){
                     const thread=link((row.username?"@"+row.username:"Member")+(Number(row.unread)?" · "+row.unread+" unread":""),"inbox.html?peer="+row.peer);
