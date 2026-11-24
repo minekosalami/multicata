@@ -33,3 +33,5 @@ body { background:#1c191e; color:#f2edf0; }
 .inbox #threads:empty { display:none; }
 #history li { padding-block:1rem; }
 #history p { margin:.45rem 0; }
+
+#history { max-height:55vh; overflow-y:auto; overflow-anchor:none; }

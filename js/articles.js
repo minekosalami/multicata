@@ -8,11 +8,6 @@
         const person=await query(table("profiles").select("username,id").eq("user_id",id).order("username",{nullsFirst:false}).order("id").limit(1).maybeSingle());
         return link(person?.username?"@"+person.username:"Member profile",profile(id));
     }
-    function sample(){
-        const section=node("section",null,"sample-print");
-        section.append(node("strong","Sample article · unpublished"),node("h3","Notes on a recording"),node("p","A recording note can describe how a track was made, which instruments you hear, and who played them."));
-        return section;
-    }
     function inline(container,text){
         const tokens=/\*\*([^*\n]+)\*\*|_([^_\n]+)_|\[([^\]\n]+)\]\((https?:\/\/[^()\s]+)\)/g;
         let start=0;
@@ -46,13 +41,34 @@
     }
     async function listing(root){
         const preview=root.hasAttribute("data-preview"),limit=preview?6:12;
+        const featured = !preview && new URLSearchParams(location.search).get("view") === "featured";
+        let moderator = false;
+        if (!preview) {
+            const heading = featured ? "Featured articles" : "All Articles";
+            document.querySelector(".folio-head h1").textContent = heading;
+            document.title = heading + " - Multi-Cata";
+            document.querySelector(featured ? "[data-featured-link]" : "[data-all-link]").setAttribute("aria-current", "page");
+            if (!featured) {
+                const user = await viewer();
+                if (user) {
+                    const {data} = await table("article_moderators").select("member").eq("member",user.id).maybeSingle();
+                    moderator = Boolean(data);
+                }
+            }
+        }
         let start=0;
         const list=node("div",null,"article-list"),status=feedback(),more=button("Load more articles",load);
         root.append(list,status,more);
         async function load(){
             more.disabled=true;status.textContent="Loading articles…";
             try{
-                const rows=preview?await MC.rpc("home_articles"):await query(table("articles").select("id,title,author,published_at,excerpt").eq("published",true).order("published_at",{ascending:false}).order("id").range(start,start+limit));
+                let rows;
+                if (preview) rows = await MC.rpc("home_articles");
+                else {
+                    let request = table("articles").select("id,title,author,published_at,excerpt,featured,revision").eq("published",true);
+                    if (featured) request = request.eq("featured",true);
+                    rows = await query(request.order("published_at",{ascending:false}).order("id").range(start,start+limit));
+                }
                 for(const row of rows.slice(0,limit)){
                     const entry=node("article"),title=node("h3"),meta=node("p");
                     title.append(link(row.title,url(row.id)));meta.append(preview?link(row.username?"@"+row.username:"Member profile",profile(row.author)):await byline(row.author)," · "+date(row.published_at));entry.append(title,meta);
@@ -67,9 +83,25 @@
                     }
                     const excerpt=row.excerpt.replace(/!\[[^\]]*\]\([^)]*(?:\)|$)/g,"").replace(/\[([^\]]+)\]\([^)]*(?:\)|$)/g,"$1").replace(/^## /gm,"").replace(/\*\*|_/g,"").replace(/\s+/g," ").trim();
                     if(excerpt)entry.append(node("p",excerpt.length>150?excerpt.slice(0,147)+"…":excerpt));
+                    if (moderator && !row.featured) {
+                        const approve = button("Approve", async () => {
+                            approve.disabled = true;
+                            try {
+                                await MC.rpc("approve_article",{target:row.id,expected_revision:row.revision});
+                                approve.replaceWith(node("strong","Featured"));
+                            } catch {
+                                status.textContent = "Approval failed. Reload the article list and try again.";
+                                approve.disabled = false;
+                            }
+                        });
+                        entry.append(approve);
+                    } else if (row.featured && !featured) entry.append(node("strong","Featured"));
                     list.append(entry);
                 }
-                if(!rows.length && !start) list.append(node("p","No published articles yet."),sample());
+                if (!rows.length && !start) {
+                    if (featured) list.append(node("p","No featured articles yet."));
+                    else list.append(node("h3","Articles"),link("Write your articles here!","writing.html"));
+                }
                 start+=Math.min(rows.length,limit);more.hidden=preview||rows.length<=limit;status.textContent="";
             }catch{status.textContent="Articles could not be loaded.";more.textContent="Try loading articles again";more.hidden=false;}
             finally{more.disabled=false;}
@@ -89,54 +121,22 @@
     }
     async function desk(root,user){
         root.replaceChildren();
-        if(!user){root.append(link("Sign in to apply or write","account.html"));return;}
-        const [app,admin]=await Promise.all(["writer_applications","editorial_admins"].map(t=>query(table(t).select("*").eq("member",user.id).maybeSingle())));
-        if(admin)await administration(root);
-        if(app?.status==="approved"){
-            const rows=await query(table("articles").select("id,title,published,revision").eq("author",user.id).order("title"));
-            const list=node("section",null,"manuscripts");
-            list.append(node("h2","Your articles"),link("New draft","writing.html"));
-            for(const row of rows)list.append(link(row.title+" · "+(row.published?"Published":"Draft"),"writing.html?edit="+row.id));
-            root.append(list);
-            const id=new URLSearchParams(location.search).get("edit");
-            const row=id?await query(table("articles").select("*").eq("author",user.id).eq("id",id).maybeSingle()):null;
-            if(id && !row){root.append(node("p","Draft unavailable."));return;}
-            editor(root,row);return;
-        }
-        if(app){root.append(node("h2","Writer application"),node("p","Application status · "+app.status));return;}
-        const form=node("form"),label=node("label","Why would you like to write?"),input=node("textarea"),send=node("button","Submit application"),status=feedback();
-        input.required=true;input.maxLength=800;label.append(input);form.append(node("h2","Apply to write"),label,send,status);root.append(form);
-        form.onsubmit=async e=>{
-            e.preventDefault();send.disabled=true;
-            try{await query(table("writer_applications").insert({statement:input.value.trim()}));await desk(root,user);}
-            catch{status.textContent="Application could not be saved.";send.disabled=false;}
-        };
-    }
-    async function administration(root){
-        const area=node("details"),list=node("div"),status=feedback();
-        area.append(node("summary","Review writer applications"),list,status);root.append(area);
-        async function refresh(){
-            const rows=await query(table("writer_applications").select("*").order("submitted_at"));
-            list.replaceChildren();
-            for(const r of rows){
-                const card=node("article");card.append(await byline(r.member),node("p",r.statement),node("strong",r.status));
-                const actions=r.status==="pending"?[["Approve","approved"],["Reject","rejected"]]:r.status==="approved"?[["Revoke writer access","revoked"]]:[["Approve","approved"]];
-                for(const [label,next] of actions)card.append(button(label,async e=>{
-                    e.currentTarget.disabled=true;
-                    try{const result=await query(table("writer_applications").update({status:next}).eq("member",r.member).eq("status",r.status).select("member"));if(!result.length)throw Error();await refresh();}
-                    catch{status.textContent="Could not update this application. Reopen to refresh.";}
-                }));
-                list.append(card);
-            }
-            if(!rows.length)list.textContent="No applications yet.";
-        }
-        area.ontoggle=()=>{if(area.open)refresh().catch(()=>status.textContent="Review unavailable.");};
+        if(!user){root.append(link("Sign in to write","account.html"));return;}
+        const rows=await query(table("articles").select("id,title,published,revision").eq("author",user.id).order("title"));
+        const list=node("section",null,"manuscripts");
+        list.append(node("h2","Your articles"),link("New draft","writing.html"));
+        for(const row of rows)list.append(link(row.title+" · "+(row.published?"Published":"Draft"),"writing.html?edit="+row.id));
+        root.append(list);
+        const id=new URLSearchParams(location.search).get("edit");
+        const row=id?await query(table("articles").select("*").eq("author",user.id).eq("id",id).maybeSingle()):null;
+        if(id && !row){root.append(node("p","Draft unavailable."));return;}
+        editor(root,row);
     }
     function editor(root,row){
         const form=node("form",null,"article-editor"),status=feedback();
         const field=(label,input)=>{const el=node("label",label);el.append(input);return el;};
         const title=node("input"),body=node("textarea");
-        title.required=true;title.maxLength=160;title.value=row?.title||"";body.maxLength=50000;body.rows=12;body.value=row?.body||"";
+        title.required=true;title.maxLength=160;title.value=row?.title||"";body.required=true;body.maxLength=50000;body.rows=12;body.value=row?.body||"";
         const tools=node("div",null,"format-tools");
         function insert(before,after,placeholder){
             const a=body.selectionStart,b=body.selectionEnd;
@@ -160,11 +160,12 @@
         const preview=node("div"),paint=button("Preview",()=>{preview.replaceChildren(node("h2",title.value||"Preview"),render(body.value,row?.id));});
         const save=node("button"),publish=node("button");
         function labels(){save.textContent=row?.published?"Save changes":"Save draft";publish.textContent=row?.published?"Unpublish":"Publish";}
-        labels();form.append(node("h2","Article editor"),field("Title",title),tools,field("Article text",body),media,save,publish,paint,status,preview);root.append(form);
+        labels();form.append(node("h2","Article editor"),field("Title",title),tools,field("Article text (at least 100 characters)",body),media,save,publish,paint,status,preview);root.append(form);
         form.onsubmit=async e=>{
             e.preventDefault();if(save.disabled)return;
             const published=e.submitter===publish?!row?.published:!!row?.published;
-            if(published&&!body.value.trim()){status.textContent="Enter article text before publishing.";return;}
+            if (!title.value.trim()) {status.textContent="Enter a title.";title.focus();return;}
+            if (Array.from(body.value.trim()).length < 100) {status.textContent="Enter at least 100 characters of article text.";body.focus();return;}
             const values={title:title.value.trim(),body:body.value,published};
             save.disabled=publish.disabled=true;
             try{
@@ -177,7 +178,7 @@
                 if(!entry){entry=link("",href);directory.append(entry);}
                 entry.textContent=row.title+" · "+(row.published?"Published":"Draft");
                 status.replaceChildren(row.published?"Published. ":"Draft saved. ",link("Read article",url(row.id)));
-            }catch{status.textContent="Could not save. Check writer access or reopen the latest version in another tab. Your text is still here.";}
+            }catch{status.textContent="Could not save. Reopen the latest version in another tab. Your text is still here.";}
             finally{save.disabled=publish.disabled=false;}
         };
     }

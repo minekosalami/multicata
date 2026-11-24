@@ -44,6 +44,8 @@
         #messages {
             flex: 1;
             overflow-y: auto;
+            min-height: 0;
+            overflow-anchor: none;
             padding: 20px;
             background: #181818;
             border-radius: 12px 12px 0 0;
@@ -324,18 +326,21 @@
             const {data: profiles} = authors.length ? await supabaseClient.from("profiles").select("user_id,username,profile_picture").in("user_id",authors) : {};
             const people = new Map((profiles || []).map(p => [p.user_id,p]));
             const messages = document.getElementById("messages");
-            const previousHeight = messages.scrollHeight;
+
             const fragment = document.createDocumentFragment();
             for (const message of data.slice().reverse()) {
                 const profile = people.get(message.user_id);
                 await displayMessage(message, {username:profile?.username || "Unknown User",profile_picture:profile?.profile_picture},fragment);
             }
+            const previousHeight = messages.scrollHeight;
+            const previousTop = messages.scrollTop;
             messages.prepend(fragment);
-            if (oldestMessage) messages.scrollTop += messages.scrollHeight - previousHeight;
-            else scrollToBottom();
+            const firstPage = !oldestMessage;
             oldestMessage = data.at(-1) || oldestMessage;
             earlier.hidden = data.length < 100;
             document.getElementById("status").textContent = oldestMessage ? "Online" : "No messages yet.";
+            if (firstPage) scrollToBottom();
+            else messages.scrollTop = previousTop + messages.scrollHeight - previousHeight;
         } catch { document.getElementById("status").textContent = "Could not load messages."; }
         finally { earlier.disabled = false; }
     }
@@ -498,7 +503,9 @@
         messageElement.appendChild(timeElement);
 
 
+        const follow = destination.id === "messages" && (message.user_id === currentUser?.id || destination.scrollHeight - destination.clientHeight - destination.scrollTop < 48);
         destination.append(messageElement);
+        if (follow) scrollToBottom();
         document.getElementById("messages").dataset.empty = "false";
 
     }
@@ -596,7 +603,7 @@
                         payload.new
                     );
 
-                    scrollToBottom();
+
 
                 }
 

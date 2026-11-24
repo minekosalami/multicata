@@ -45,7 +45,7 @@
                  alt="MultiCata v0.5" fetchpriority="high">
             <a href="secret.html" class="secret-button" aria-label="Open secret page"></a>
         </div>
-        <aside class="update-strip"><h2>Website updates</h2><p>You can now <a href="articles.html">read articles</a> and <a href="writing.html">apply to write</a> from your MultiCata account.</p></aside>
+        <aside class="update-strip"><h2>Website updates</h2><nav class="article-views" aria-label="Browse articles"><a data-featured-link href="articles.html?view=featured">Featured articles</a><a data-all-link href="articles.html">All articles</a></nav></aside>
         <div class="flight-deck">
             <div class="orbit-window">
                 <p class="orbit-splash" id="orbit-splash"></p>
@@ -65,22 +65,19 @@
         </div>
         <div class="drift-lane" aria-hidden="true"></div>
         <div class="portal-grid">
-            <div class="feed-column listen-column">
             <section id="music" class="station music-station"><header><h2>Music</h2><a href="music.html">All Music <span aria-hidden="true">↗</span></a></header><div data-library="home"></div></section>
-            <section id="chats" class="station chat-station"><header><h2>Messages</h2></header><div id="home-inbox"></div><footer><a href="inbox.html">Private messages</a><a href="chat.html">Community chat</a></footer></section>
-            </div><div class="feed-column read-column">
             <section id="reading" class="station reading-station"><header><h2>Articles</h2><a href="articles.html">All Articles <span aria-hidden="true">↗</span></a></header><div data-article-list data-preview></div></section>
-            <section id="posts" class="station post-station"><header><h2>Posts</h2><a href="posts.html">All Posts <span aria-hidden="true">↗</span></a></header><div id="recentPosts"></div></section>
-            </div>
+            <section id="chats" class="station chat-station"><header><h2>Messages</h2></header><div id="home-inbox"></div><footer><a href="inbox.html">Private messages</a><a href="chat.html">Community chat</a></footer></section>
+            <section id="posts" class="station post-station"><header><h2>Posts</h2><a class="posts-button" href="posts.html">View all posts <span aria-hidden="true">↗</span></a></header><div id="recentPosts"></div></section>
+            <section id="directory" class="directory creator-register">
+                <h2>Creators &amp; characters</h2>
+                <section class="creator-list"><h3>Community creators</h3><div id="home-creators"></div></section>
+                <div class="archive-shelf"><section><h3>Creator pages</h3><a href="lliosette.html">LLiosette</a><a href="dorianhallow.html">Dorian Hallow</a></section>
+                    <a class="art-link" href="characters.html"><img data-near-src="../images/nart-directory.webp" alt="" loading="lazy" width="384" height="288"><span>Character gallery ↗</span></a>
+                    <a class="art-link" href="../catssaga/Endure().png" target="_blank" rel="noopener"><img data-near-src="../images/cats-saga-print.webp" loading="lazy" width="512" height="396" alt="Original CatsSaga promo artwork"><span>View full-size CatsSaga artwork (opens in a new tab)</span></a>
+                </div>
+            </section>
         </div>
-        <section id="directory" class="directory creator-register">
-            <h2>Creators &amp; characters</h2>
-            <section class="creator-list"><h3>Community creators</h3><div id="home-creators"></div></section>
-            <div class="archive-shelf"><section><h3>Creator pages</h3><a href="lliosette.html">LLiosette</a><a href="dorianhallow.html">Dorian Hallow</a></section>
-                <a class="art-link" href="characters.html"><img data-near-src="../images/nart-directory.webp" alt="" loading="lazy" width="384" height="288"><span>Character gallery ↗</span></a>
-                <a class="art-link" href="../catssaga/Endure().png" target="_blank" rel="noopener"><img data-near-src="../images/cats-saga-print.webp" loading="lazy" width="512" height="396" alt="Original CatsSaga promo artwork"><span>View full-size CatsSaga artwork (opens in a new tab)</span></a>
-            </div>
-        </section>
     </main>
     <script src="../js/articles.js" defer></script>
     <script src="../js/home.js" defer></script>

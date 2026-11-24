@@ -42,7 +42,7 @@ const {server, openVisitor} = require('../next/runtime.cjs');
             await follow('Writing','writing.html','Writing');
             await follow('All Articles','articles.html','All Articles');
             await follow('Home','index.html','MultiCata');
-            await follow('All Posts','posts.html','All Posts');
+            await follow('View all posts','posts.html','All Posts');
             await view.locator('.member-menu summary').focus();
             await page.keyboard.press('Enter');
             await follow('Private messages','inbox.html','Private messages');
