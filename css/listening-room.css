@@ -1,0 +1,107 @@
+/* The catalogue and its listening surfaces share paper, ink and ruled rows. */
+:root { --sheet:#faf7ef; --ink:#292229; --muted:#665c60; --rule:#beb3a8; --violet:#642d83; }
+[data-library] h1 { font:normal clamp(1.8rem,3vw,2.5rem)/1.12 Georgia,serif; letter-spacing:normal; margin:.3rem 0 1.1rem; }
+.catalogue { margin-top:clamp(1rem,3vw,2.3rem); }
+.catalogue-tools,.reaction-bar,.row-actions,.relationships .row-actions,.account-links {display:flex;align-items:center;flex-wrap:wrap;gap:.45rem .85rem;}
+.catalogue-tools { justify-content:space-between; border-block:1px solid var(--rule); padding:.6rem 0; }
+.catalogue-tools select,.record-list button,.record-row button,.catalogue-tools button,.reaction-bar button,.relationships button,.discussion button,[data-library]>button {
+  font:600 .9rem Arial,sans-serif; color:var(--ink); background:#f5efe4; border:1px solid var(--rule); border-radius:2px;
+  cursor:pointer; padding:.55rem .7rem; min-height:36px;
+}
+.record-list .row-actions button:first-child,.record-row .row-actions button:first-child { background:#59346e; color:white; border-color:#59346e; }
+.reaction-bar [aria-pressed=true] { color:white; background:#5d376d; }
+.record-row { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem 1rem; border-bottom:1px solid var(--rule); padding:.65rem 0; }
+.record-row>img { width:3.2rem; height:3.2rem; object-fit:contain; background:#fff; }
+.record-text { flex:1; min-width:9rem; overflow-wrap:anywhere; }
+.record-name { font:600 1.1rem Georgia,serif; }
+.record-credit,.record-text small,.track-credits,.quiet {color:var(--muted);font-size:.9rem;}
+.record-row a,.catalogue-tools a,.discussion a,.relationships a {color:var(--violet);text-underline-offset:3px;}
+.social-status { margin:.4rem 0; font-size:.9rem; }
+.social-status:empty { display:none; }
+.record-row .social-status { width:100%; }
+.catalogue .feature { grid-template-columns:minmax(7rem,11rem) 1fr; padding:.85rem 0; margin-top:1.3rem; gap:1.3rem; border-block:1px solid var(--rule); }
+.feature #feature-title { font:normal 1.65rem Georgia,serif;margin:0; }
+.feature .record-info {display:flex;align-items:baseline;gap:.3rem 1rem;flex-wrap:wrap;}
+.feature .record-info .label {width:100%;margin:0;}
+.feature .record-note,.feature .actions {margin:0;}
+.feature .play-record {padding:.5rem .7rem;font-size:.9rem;}
+.feature .artist-byline {font-size:1rem;}
+.library-page {max-width:52rem;}
+.reaction-bar {padding:.85rem 0;}
+.discussion,.relationships { margin:1rem 0; padding:.75rem 1rem; color:var(--ink);background:var(--sheet);border-block:1px solid var(--rule); }
+.discussion summary {font:600 1.1rem Georgia,serif;cursor:pointer;padding:.4rem 0;}
+.discussion .comment {padding:.75rem 0;border-bottom:1px solid var(--rule);overflow-wrap:anywhere;}
+.comment header {font:normal .85rem Arial,sans-serif;color:var(--muted);}
+.comment p {white-space:pre-wrap;margin:.4rem 0;}
+.discussion .reply {margin-left:1rem;border-left:2px solid #c3b5c1;padding-left:1rem;}
+.comment-form {max-width:38rem;margin:1rem 0;}
+.comment-form label,.comment-form textarea {display:block;width:100%;box-sizing:border-box;}
+.comment-form textarea {min-height:3.2rem;margin:.35rem 0;padding:.65rem;font:inherit;resize:vertical;}
+.notice {display:block;padding:.8rem 0;border-bottom:1px solid var(--rule);}
+.notice.unread {font-weight:700;}
+.player-panel {background:var(--sheet);color:var(--ink);border:1px solid var(--rule);box-shadow:none;max-height:65dvh;overflow:auto;}
+.player-panel button {color:var(--violet);min-height:36px;}
+.player-panel details {border-block:1px solid var(--rule);padding:.5rem 0;}
+.player-panel summary {cursor:pointer;}
+.player-panel li {overflow-wrap:anywhere;}
+@media(max-width:620px){
+ .catalogue .feature {grid-template-columns:6rem minmax(0,1fr);gap:.75rem;}
+ .feature .record-info {grid-row:auto;}
+ .feature .actions {gap:.5rem;}
+ .record-row {gap:.35rem .65rem;}
+ .record-row .row-actions {gap:.4rem;}
+ .record-row button,.reaction-bar button,.discussion button,.catalogue-tools select,.relationships button {min-height:44px;}
+}
+
+
+/* Member writing uses solid paper surfaces so individual background images can
+   surround the profile without changing text contrast. */
+.community-paper {color-scheme:light;--page:var(--sheet);--surface:#fffaf1;--surface-raised:#f1eadd;--text:var(--ink);--line:var(--rule);--accent:var(--violet);background:var(--sheet);color:var(--ink);}
+.community-paper :is(.profile-card,.post,.posts-section,#messages,.chat-container .message,.chat-container .input-area) {color:var(--ink);background:var(--surface);border-color:var(--rule);box-shadow:none;border-radius:2px;}
+.community-paper :is(.post-content,.username,.post-username,.display-name,.bio,.posts-title,.message-text,.profile-information,.post-time,.message-time,.member-since,.loading,.no-posts,#status,.profile-picture-help,.account-content .message) {color:var(--ink);}
+.community-paper :is(.profile-page,.post,#posts,.account-content,.inbox,.chat-container,main) a:not(.profile-link) {color:var(--violet);}
+.community-paper .profile-page>.relationships,.community-paper .profile-page>.discussion,.community-paper .profile-page>section {background:var(--surface);}
+.community-paper :is(.post,.profile-page) .discussion {border:0;border-block-start:1px solid var(--rule);padding:.45rem 0;background:transparent;}
+.community-paper .profile-page>.discussion {padding:.8rem 1rem;background:var(--surface);}
+.community-paper .comment-form textarea,.community-paper #messageInput,.community-paper .input-area {color:var(--ink);background:#fffdfa;}
+.community-paper input[type=file],.community-paper select {color:var(--ink);}
+.community-paper :is(.post,.profile-page) button,.community-paper .profile-link {color:var(--ink);background:#eee6da;border:1px solid var(--rule);}
+.community-paper .profile-information h1,.community-paper .posts-title {font-family:Georgia,serif;}
+.community-paper .default-profile-picture {color:var(--violet);background:#ece1d2;}
+.community-paper main details>summary {color:var(--ink);}
+.record-list .record-row {position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:.4rem 0;column-gap:.7rem;}
+.record-list .record-text {grid-column:1;grid-row:1;min-width:0;}
+.record-list .record-row>.row-actions {grid-column:2;grid-row:1;justify-content:flex-end;}
+.record-list .record-row>img {width:2.7rem;height:2.7rem;position:absolute;left:0;}
+.record-list .record-row:has(>img) .record-text {padding-left:3.2rem;}
+.record-list .record-row>.social-status {grid-column:1/-1;margin:0;}
+.record-credit,.record-text small {line-height:1.45;}
+.library-page>.record-row {border-block:1px solid var(--rule);margin-block:.7rem;}
+.player-panel footer {display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
+.player-panel footer a {color:var(--violet);}
+.player-panel li>span {display:block;}
+@media(max-width:620px){
+ .record-list .record-row {grid-template-columns:minmax(0,1fr) auto;}
+ .record-list .record-row:has(>img) .record-text {padding-left:0;}
+ .record-list .record-row>img {display:none;}
+ .record-list .record-row>.row-actions {max-width:9.5rem;}
+ .member-menu>summary {padding:0 .2rem;font-size:.8rem;}
+}
+
+.community-paper #postHelp,.community-paper .post-time,.community-paper .message-time,.community-paper .member-since,
+.community-paper #profileArea .profile-picture-help {color:#655c60;}
+.profile-information .bio {white-space:pre-wrap; text-align:left; margin:.6rem 0; padding:0; min-height:0; line-height:1.5;}
+.discography-actions {display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;font:normal .95rem Arial,sans-serif;}
+.profile-page .discography-actions button {min-height:40px;padding:.45rem .8rem;border-radius:2px;background:#59346e;color:white;}
+.discussion input,.discussion textarea {color:var(--ink);background:#fffdfa;border:1px solid #998c82;border-radius:2px;font:inherit;}
+.queue-transport {display:flex;gap:.85rem;}
+.player-panel ol {padding-left:1.4rem;}
+.player-panel button:disabled {color:#625861;cursor:default;opacity:1;text-decoration:none;}
+@media(max-width:700px){
+ .record-list .record-row>img {display:block;width:2rem;height:2rem;top:.8rem;}
+ .record-list .record-row:has(>img) .record-text {padding-left:2.4rem;}
+ .record-list .record-row {min-height:3rem;}
+ .community-paper .profile-card {padding:1rem;gap:.75rem;}
+ .community-paper .profile-card .bio {margin:.5rem 0;}
+ .discography-actions a {padding:.55rem 0;}
+}

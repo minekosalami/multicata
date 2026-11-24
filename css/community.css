@@ -1,0 +1,35 @@
+/* Community pages keep their dark palette and share the catalogue's type hierarchy. */
+body { background:#1c191e; color:#f2edf0; }
+.account-content,.container,.inbox main { text-align:left; width:min(100%,46rem); box-sizing:border-box; margin:0 auto; padding:clamp(1.4rem,5vw,3.5rem) 1.25rem; }
+.account-content h1,.container h1,.inbox main h1,.chat-title h1 { font:normal clamp(2.5rem,6vw,4rem)/1.08 Georgia,serif; letter-spacing:-.045em; margin:0 0 1rem; }
+.account-content h2 { font:normal 1.6rem Georgia,serif; }
+.account-content label,.composer label { font-weight:600; }
+.account-content input:not([type=checkbox]),.account-content textarea,.composer textarea,.composer select,.inbox textarea {
+    box-sizing:border-box; font:inherit; display:block; width:100%; max-width:100%; padding:.65rem .75rem;
+    margin:.35rem 0 1rem; background:#f8f5f7; color:#251f26; border:1px solid #c1b8c1; border-radius:2px;
+}
+.account-content input[type=checkbox] { width:1.1rem; height:1.1rem; display:inline; margin:.3rem; vertical-align:middle; }
+.account-content input[type=file],.composer input[type=file] { color:inherit; background:transparent; border:1px solid #746773; }
+.account-content textarea,.inbox textarea { resize:vertical; }
+.account-content #authArea { max-width:30rem; border-top:1px solid #756976; padding-top:1.25rem; }
+.account-content button,.account-content .profile-link,.composer button,.post button,.inbox main button,#sendButton {
+    font:600 .95rem Arial,sans-serif; color:#261d29; background:#eedbed; border:0; border-radius:2px; padding:.7rem 1rem; margin:.25rem .35rem .25rem 0; cursor:pointer;
+}
+.account-content .profile-link { text-decoration:none; }
+.account-content details { border-block:1px solid #736574; margin:1.25rem 0; padding:1rem 0; }
+.account-content summary { cursor:pointer; font:normal 1.6rem Georgia,serif; }
+#profileArea .profile-picture-help,#accountArea .member-since,.account-content .message { margin:.65rem 0; color:#d2c5d1; }
+#profileArea .profile-picture-preview { margin:.5rem 0 1rem; }
+#appearance,#publishMusic { margin:1rem 0; min-width:0; }
+#appearance { padding:1rem; border:1px solid #746773; }
+.composer,.post { margin:1rem 0; border:0; border-top:1px solid #746773; border-radius:0; background:transparent; padding:1rem 0; }
+.post a,.inbox main a,.chat-container a { color:#ecd5ee; text-underline-offset:3px; }
+.post-time,.message-time { color:#c8bec7; }
+.chat-title { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; text-align:left; padding:1rem 0; }
+.chat-title h1 { font-size:clamp(2rem,4vw,3rem); margin:0; }
+.chat-title a { font:600 .95rem Arial,sans-serif; }
+.chat-container #messages,.chat-container .message { border-radius:2px; }
+.inbox #threads { display:flex; gap:.75rem; flex-wrap:wrap; padding:.7rem 0; border-block:1px solid #766a76; }
+.inbox #threads:empty { display:none; }
+#history li { padding-block:1rem; }
+#history p { margin:.45rem 0; }

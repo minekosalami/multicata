@@ -1,0 +1,178 @@
+/* Different tile periods keep the distant stars and brighter binaries apart. */
+html:has(body.orbit-home){background:#0d1025}
+body.orbit-home {
+    display:flow-root;min-height:100vh;
+    --far-stars: radial-gradient(circle at 9px 19px,#a6a8c4 .65px,transparent 1.1px),
+        radial-gradient(circle at 62px 91px,#747391 .8px,transparent 1.2px),
+        radial-gradient(circle at 90px 32px,#8c789f .6px,transparent 1.15px),
+        radial-gradient(circle at 131px 61px,#84879e .85px,transparent 1.25px);
+    --near-stars: radial-gradient(circle at 22px 53px,#fff1c8 1.2px,#bca1dc88 1.6px,transparent 2.6px),
+        radial-gradient(circle at 138px 131px,#c4dbf3 1px,transparent 1.8px),
+        radial-gradient(circle at 142px 135px,#8a7cad .7px,transparent 1.3px),
+        radial-gradient(circle at 238px 32px,#f6cdea .9px,transparent 1.6px);
+    background-color:#0d1025;color:var(--ink);
+    background-image:var(--far-stars),var(--near-stars),radial-gradient(ellipse at 14% 14%,#34224c 0,transparent 55%),radial-gradient(ellipse at 94% 72%,#20254c 0,transparent 60%);
+    background-size:147px 107px,147px 107px,147px 107px,147px 107px,251px 173px,251px 173px,251px 173px,251px 173px,100% 100%,100% 100%;
+}
+.orbit-home>.star-field{display:none}
+.orbit-home .portal{--opening-gap:clamp(.6rem,1.25vw,1rem);margin-top:var(--opening-gap)}
+.flight-deck{display:grid;grid-template-columns:minmax(0,1fr) minmax(14rem,25%);gap:.8rem;align-items:stretch}
+.orbit-window{position:relative;overflow:hidden;isolation:isolate;display:grid;grid-template-rows:auto 1fr;padding:1.1rem clamp(.65rem,2vw,1.5rem) .65rem;color:#eee7ff;background-color:#15132b;background-image:var(--near-stars),var(--far-stars),radial-gradient(ellipse at 54% 66%,#3d2d59,transparent 70%);background-size:251px 173px,251px 173px,251px 173px,251px 173px,147px 107px,147px 107px,147px 107px,147px 107px,100% 100%;border:1px solid #a99cbf;outline:1px solid #403b59;outline-offset:-6px;box-shadow:inset 0 -7px #26213d,4px 4px #090918}
+.orbit-window::before,.orbit-window::after{content:"";position:absolute;pointer-events:none;height:4px;width:26%;background:repeating-linear-gradient(90deg,#a799ba 0 1px,transparent 1px 11px);left:1rem;bottom:11px}
+.orbit-window::after{left:auto;right:1rem}
+.orbit-splash{position:relative;z-index:1;justify-self:start;align-self:start;margin:.2rem .45rem;min-height:1.7em;color:#ffec69;font:900 clamp(1.05rem,2.25vw,1.85rem)/1.15 "Trebuchet MS",Arial,sans-serif;letter-spacing:-.035em;transform:rotate(-3deg);text-shadow:2px 2px #62396d;overflow-wrap:anywhere}
+.orbit-stage{position:relative;align-self:center;min-width:0;width:100%;height:clamp(12rem,21vw,18rem);--radius:clamp(6rem,17vw,14.5rem);--tilt:-9deg}
+.orbit-stage::before,.orbit-stage::after{content:"";position:absolute;top:50%;left:50%;width:calc(var(--radius)*2.1);height:calc(var(--radius)*.58);border:1px dashed #a495b75e;border-radius:50%;transform:translate(-50%,-50%) rotate(-4deg)}
+.orbit-stage::after{width:90%;height:1px;border:0;background:linear-gradient(90deg,#9583ab60,transparent 20% 80%,#9583ab60);transform:translate(-50%,-50%)}
+.orbit-scene{position:absolute;inset:0;perspective:1000px;transform-style:preserve-3d;z-index:1}
+.orbital-logo,.rotor{position:absolute;top:50%;left:50%;height:auto;transform-origin:0 0}
+.orbital-logo{width:clamp(10rem,22vw,18rem);transform:translate(-50%,-50%)}
+.rotor{width:clamp(4.6rem,8vw,7rem);animation:revolve 2.85s linear infinite -.28s}
+.rotor.bart{width:clamp(6rem,11vw,9rem);animation-delay:-1.705s}
+.orbit-stage:not(.orbit-running) .rotor{animation-play-state:paused}
+/* Sixteen waypoints on one tilted circle. Perspective supplies the scale and depth
+   order; both images keep facing the reader. Identical endpoints close the path. */
+@keyframes revolve{
+ 0%{transform:translate3d(calc(var(--radius)*1),calc(var(--radius)*0),calc(var(--radius)*0)) translate(-50%,-50%)}
+ 6.25%{transform:translate3d(calc(var(--radius)*0.9239),calc(var(--radius)*0.0574),calc(var(--radius)*0.3827)) translate(-50%,-50%)}
+ 12.5%{transform:translate3d(calc(var(--radius)*0.7071),calc(var(--radius)*0.1061),calc(var(--radius)*0.7071)) translate(-50%,-50%)}
+ 18.75%{transform:translate3d(calc(var(--radius)*0.3827),calc(var(--radius)*0.1386),calc(var(--radius)*0.9239)) translate(-50%,-50%)}
+ 25%{transform:translate3d(calc(var(--radius)*0),calc(var(--radius)*0.15),calc(var(--radius)*1)) translate(-50%,-50%)}
+ 31.25%{transform:translate3d(calc(var(--radius)*-0.3827),calc(var(--radius)*0.1386),calc(var(--radius)*0.9239)) translate(-50%,-50%)}
+ 37.5%{transform:translate3d(calc(var(--radius)*-0.7071),calc(var(--radius)*0.1061),calc(var(--radius)*0.7071)) translate(-50%,-50%)}
+ 43.75%{transform:translate3d(calc(var(--radius)*-0.9239),calc(var(--radius)*0.0574),calc(var(--radius)*0.3827)) translate(-50%,-50%)}
+ 50%{transform:translate3d(calc(var(--radius)*-1),calc(var(--radius)*0),calc(var(--radius)*0)) translate(-50%,-50%)}
+ 56.25%{transform:translate3d(calc(var(--radius)*-0.9239),calc(var(--radius)*-0.0574),calc(var(--radius)*-0.3827)) translate(-50%,-50%)}
+ 62.5%{transform:translate3d(calc(var(--radius)*-0.7071),calc(var(--radius)*-0.1061),calc(var(--radius)*-0.7071)) translate(-50%,-50%)}
+ 68.75%{transform:translate3d(calc(var(--radius)*-0.3827),calc(var(--radius)*-0.1386),calc(var(--radius)*-0.9239)) translate(-50%,-50%)}
+ 75%{transform:translate3d(calc(var(--radius)*-0),calc(var(--radius)*-0.15),calc(var(--radius)*-1)) translate(-50%,-50%)}
+ 81.25%{transform:translate3d(calc(var(--radius)*0.3827),calc(var(--radius)*-0.1386),calc(var(--radius)*-0.9239)) translate(-50%,-50%)}
+ 87.5%{transform:translate3d(calc(var(--radius)*0.7071),calc(var(--radius)*-0.1061),calc(var(--radius)*-0.7071)) translate(-50%,-50%)}
+ 93.75%{transform:translate3d(calc(var(--radius)*0.9239),calc(var(--radius)*-0.0574),calc(var(--radius)*-0.3827)) translate(-50%,-50%)}
+ 100%{transform:translate3d(calc(var(--radius)*1),calc(var(--radius)*-0),calc(var(--radius)*-0)) translate(-50%,-50%)}
+}
+.motion-off .orbit-stage .rotor{animation:none;transform:translateX(var(--radius)) translate(-50%,-50%)}
+.motion-off .orbit-stage .bart{transform:translateX(calc(-1 * var(--radius))) translate(-50%,-50%)}
+@media(prefers-reduced-motion:reduce){
+ .orbit-stage .rotor{animation:none;transform:translateX(var(--radius)) translate(-50%,-50%)}
+ .orbit-stage .bart{transform:translateX(calc(-1 * var(--radius))) translate(-50%,-50%)}
+}
+.flight-index{display:flex;flex-direction:column;background:#fff2bf;border:3px double #89715b;padding:.6rem .8rem;box-shadow:3px 4px #0e0d20}
+.portal>.welcome-print{box-sizing:border-box;width:100%;padding:0;background:#fff;border:5px solid #000}
+.portal>.welcome-print::before,.portal>.welcome-print::after{content:none}
+.portal>.welcome-print img{width:100%;height:auto;max-height:none;border:0;outline:0;box-shadow:none;transform:none}
+.flight-index .contents{padding:.6rem 0 0;border:0;background:none;flex:1}
+.flight-index .contents h2{font-size:1.22rem}.flight-index .contents a{font-size:.9rem;min-height:29px}
+.orbit-home .update-strip{margin-block:var(--opening-gap);border:1px solid #7f7194;border-inline:7px double #736982;background:#efe4e7}
+.feed-column{display:grid;gap:1.25rem;min-width:0}
+.orbit-home .station,.orbit-home .directory{box-shadow:4px 5px #0907189c}
+.orbit-home .record-list .reaction-bar{grid-row:2;grid-column:1/-1;padding:.12rem 0 0;display:flex;flex-wrap:wrap;gap:.2rem}
+.orbit-home .reaction-bar button{font-size:.8rem;min-height:32px;padding:.25rem .55rem}
+.home-entry{padding:.65rem .1rem;border-bottom:1px dotted #a19685}
+.home-entry p{margin:.3rem 0;line-height:1.4}
+.home-entry time,.home-entry small{display:block;color:#495654;font:normal .82rem/1.5 Verdana,Arial,sans-serif}
+.home-entry a{display:inline-block}
+.orbit-home #home-inbox a{display:flex;justify-content:space-between;gap:.4rem;align-items:baseline;flex-wrap:wrap;border-bottom:1px dashed #96afb3}
+#home-creators{display:grid;gap:.3rem}#home-creators a{display:block;overflow-wrap:anywhere;padding:.35rem 0;border-bottom:1px dotted #969382}
+.orbit-home .article-list article{padding:.75rem 0;border-bottom:1px solid #c5b3c2;display:flow-root}
+.orbit-home .article-list p{margin:.4rem 0}.article-thumb{float:right;width:4.4rem;height:4.4rem;object-fit:cover;margin:0 0 .7rem .7rem;border:1px solid #978397}
+.orbit-home .station>header{margin-bottom:.35rem}
+@media(max-width:740px){
+ .flight-deck{grid-template-columns:1fr;gap:.45rem}
+ .orbit-stage{height:clamp(10rem,34vw,13rem);--radius:clamp(5rem,27vw,11rem)}
+ .orbital-logo{width:clamp(8rem,38vw,14rem)}
+ .rotor{width:clamp(3.5rem,15vw,5rem)}.rotor.bart{width:clamp(4.7rem,20vw,6.5rem)}
+ .flight-index .contents{padding:0;gap:.1rem .65rem}
+ .flight-index .contents h2{width:100%;font-size:.9rem}.flight-index .contents a{min-height:34px}
+ .portal-grid .feed-column{display:contents}
+ .portal-grid #music{order:1}.portal-grid #reading{order:2}.portal-grid #chats{order:3}.portal-grid #posts{order:4}
+ .orbit-home .reaction-bar button{min-height:44px}
+}
+
+/* Fixed registration marks pick out a handful of bright stars on the map. */
+body.orbit-home{position:relative;--spark:radial-gradient(ellipse 3.5px 1px at 51px 42px,#f1dfedaa 40%,transparent),radial-gradient(ellipse 1px 4px at 51px 42px,#e6d7f5aa 35%,transparent),radial-gradient(circle at 86px 93px,#a99bc9 .8px,transparent 1.1px),radial-gradient(circle at 134px 138px,#d6edff .8px,transparent 1.2px)}
+.orbit-home::before,.orbit-window::before{content:"";position:absolute;inset:0;width:auto;height:auto;pointer-events:none;background-image:var(--spark);background-size:311px 239px,311px 239px,157px 143px,193px 157px}
+.orbit-home::before{z-index:-1}.orbit-window::before{opacity:.84}
+.orbit-window{border-radius:2px 21px 2px 2px;border-bottom:4px double #c3b2cd}
+.flight-index .contents a::after{content:"↘";font-size:.8rem}
+.orbit-home .music-station .record-row{border-bottom:1px dashed #88a59a}
+.orbit-home .music-station .record-row:last-child{border-bottom:0}
+.orbit-home .record-row>.reaction-bar{justify-content:flex-start}
+.orbit-home .record-row>.reaction-bar button{border-color:transparent;background:transparent;box-shadow:none;color:#58406b;text-decoration:underline;text-underline-offset:3px}
+.orbit-home .record-row>.reaction-bar button[aria-pressed=true]{background:#dee6ce;border-color:#77917b}
+.reading-station>header{position:relative;padding-left:1.15rem!important;background:linear-gradient(90deg,#dccee3,#ece1e5);border-bottom:4px double #776382}
+.orbit-home .reading-station .article-list h3{margin:.2rem 0;font-size:clamp(1.3rem,2vw,1.85rem);line-height:1.1}
+.orbit-home .reading-station .article-list article:first-child h3{font-size:clamp(1.65rem,2.7vw,2.15rem)}
+.orbit-home .reading-station .article-list article>p:first-of-type{font:.84rem/1.4 Verdana,Arial,sans-serif}
+.orbit-home .reading-station .article-list article>p:last-child{font:1.02rem/1.45 Georgia,serif}
+.orbit-home .chat-station>header{border-top:5px solid transparent;border-image:repeating-linear-gradient(120deg,#73aeb0 0 8px,#f6f0d7 8px 15px,#a990ac 15px 21px,#f6f0d7 21px 29px) 5 0 0}
+.orbit-home #home-inbox time{font:.78rem/1.4 Verdana,Arial,sans-serif;color:#455b59}
+.orbit-home .post-station{background:#fff7e1}
+.orbit-home .post-station>header{background:radial-gradient(circle at 50% 4px,#563c4d 2px,transparent 2.6px) left top/17px 8px repeat-x,#ffc9a6;padding-top:1.1rem}
+.home-entry{display:grid;grid-template-columns:1fr auto;gap:.2rem .8rem}
+.home-entry p,.home-entry a:last-child{grid-column:1/-1}
+.home-entry a:last-child{justify-self:start;font-size:.84rem}
+.creator-register .creator-list h3{font:italic 1.55rem Georgia;margin:.6rem 0}
+.creator-register #home-creators{grid-template-columns:repeat(auto-fit,minmax(min(13rem,100%),1fr));gap:0 1rem;border-block:3px double #b9aa79;padding:.4rem 0 .65rem}
+.creator-entry{border-bottom:1px dotted #9c956c;padding:.3rem .4rem}.creator-entry small{color:#545c49}
+.creator-register #home-creators a{border:0;padding:.1rem 0}
+.orbit-home .directory .archive-shelf{margin-top:1.2rem;align-items:start}
+.orbit-home .art-link{display:block;background:#fffdf1;border:4px double #819088}
+.orbit-home .art-link span{font:italic bold 1.08rem Georgia;padding:.5rem}
+@media(min-width:741px){.flight-index .contents a{padding:.16rem 0}}
+@media(max-width:740px){.flight-index .contents a::after{display:none}}
+
+.orbit-home :is([data-library=home],[data-article-list]){min-height:10rem}
+
+/* Leave an opening in the starfield between the orbit and the feeds. */
+.drift-lane{
+    position:relative;
+    z-index:-1;
+    container-type:inline-size;
+    height:clamp(3.8rem,6.5vw,5.4rem);
+    pointer-events:none;
+    user-select:none;
+}
+.logo-field{
+    position:absolute;inset:0;z-index:-1;display:grid;grid-template-rows:repeat(10,minmax(0,1fr));
+    overflow:hidden;pointer-events:none;user-select:none;
+}
+.logo-track{position:relative;container-type:size}
+.drifting-logo{
+    position:absolute;
+    left:0;
+    top:50%;
+    width:min(clamp(8rem,16vw,15rem),80cqh,40cqw);
+    height:auto;
+    opacity:.37;
+    animation:logo-drift var(--duration,128s) linear var(--phase,0s) infinite both paused;
+}
+@keyframes logo-drift{
+    from{transform:translate3d(-115%,-50%,0) rotate(-8deg)}
+    to{transform:translate3d(calc(100cqw + 15%),-50%,0) rotate(9deg)}
+}
+.logo-track:nth-child(even) .drifting-logo{animation-direction:reverse}
+.logo-track.in-view .drifting-logo{animation-play-state:running}
+/* Brief, muted square clusters in the open starfield, clear of the widgets. */
+.drift-lane::before,.drift-lane::after{
+    content:"";position:absolute;top:29%;left:69%;width:9px;height:9px;
+    background:#a99cbf;box-shadow:9px 0 #9fdac9,9px 9px #a99cbf,27px 9px #c8adbb;
+    opacity:0;pointer-events:none;
+    animation:pixel-shift 23s steps(1,end) infinite paused;
+}
+.drift-lane::after{
+    top:61%;left:36%;animation-delay:-9s;animation-duration:31s;
+    box-shadow:-9px 0 #9fdac9,0 -9px #c8adbb,18px 0 #a99cbf,18px 9px #9fdac9;
+}
+@keyframes pixel-shift{
+    0%,48%,100%{opacity:0;transform:none}
+    42%{opacity:.23;transform:none}
+    45%{opacity:.19;transform:translate(9px,-9px)}
+}
+.drift-running::before,.drift-running::after{animation-play-state:running}
+.motion-off .drift-lane::before,.motion-off .drift-lane::after,
+.effects-suspended .drift-lane::before,.effects-suspended .drift-lane::after{animation:none}
+@media(prefers-reduced-motion:reduce){.drift-lane::before,.drift-lane::after{animation:none}}
+.motion-off .logo-track .drifting-logo,.effects-suspended .logo-track .drifting-logo{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.logo-track.in-view .drifting-logo{animation-play-state:paused}}
+.orbit-home .station>header a{display:inline-flex;gap:.25em;align-items:center;min-height:44px;padding-inline:.35em}

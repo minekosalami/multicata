@@ -9,7 +9,9 @@
 
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script>
 
     <style>
 
@@ -701,10 +703,16 @@
 
     </style>
 
+<script src="../js/community.js"></script>
+    <script src="../js/music.js"></script>
+    <script src="../js/profile-options.js"></script>
+    <link rel="stylesheet" href="../css/listening-room.css">
+    <script src="../js/social.js"></script>
+<link rel="stylesheet" href="../css/renaissance.css">
 </head>
 
 
-<body>
+<body class="community-paper">
 
 
     <!-- ==========================================
@@ -712,10 +720,11 @@
     =========================================== -->
 
     <header class="site-header">
-        <a class="site-brand" href="../index.html">Multi-Cata</a>
-        <a class="back-button" data-back-button href="posts.html">Back to posts</a>
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button aria-label="Go back" href="posts.html">Back</a>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
+            <a href="../html/articles.html">Articles</a>
             <a href="posts.html">Posts</a>
             <a href="chat.html">Chat</a>
             <a href="account.html">Account</a>
@@ -747,19 +756,7 @@
     // SUPABASE
     // ==========================================
 
-    const SUPABASE_URL =
-        "https://ncmizvdipzjwiknslohn.supabase.co";
 
-
-    const SUPABASE_PUBLISHABLE_KEY =
-        "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
-
-
-    const supabaseClient =
-        window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY
-        );
 
 
 
@@ -790,7 +787,7 @@
             );
 
 
-        if (!username) {
+        if (!username && !params.get("id")) {
 
             profileArea.className =
                 "error";
@@ -814,12 +811,13 @@
         } = await supabaseClient
             .from("profiles")
             .select(
-                "user_id, username, display_name, bio, profile_picture, created_at"
+                "*"
             )
             .eq(
-                "username",
-                username
+                username ? "username" : "user_id",
+                username || params.get("id")
             )
+            .order("username", {nullsFirst:false}).order("id").limit(1)
             .maybeSingle();
 
 
@@ -858,32 +856,6 @@
         // PROFILE PICTURE
         // ======================================
 
-        let pictureHTML = "";
-
-
-        if (data.profile_picture) {
-
-            pictureHTML = `
-                <img
-                    src="${escapeHTML(data.profile_picture)}"
-                    class="profile-picture"
-                    alt="Profile picture"
-                >
-            `;
-
-        } else {
-
-            pictureHTML = `
-                <div class="default-profile-picture">
-                    ?
-                </div>
-            `;
-
-        }
-
-
-
-        // ======================================
         // DISPLAY NAME
         // ======================================
 
@@ -939,18 +911,14 @@
 
             <section class="profile-card" aria-label="Profile information">
 
-            <div class="profile-picture-container">
-
-                ${pictureHTML}
-
-            </div>
+            <div class="profile-picture-container"></div>
 
 
             <div class="profile-information">
 
-                <div class="username">
+                <h1 class="username">
                     @${escapeHTML(data.username)}
-                </div>
+                </h1>
 
 
                 ${
@@ -966,9 +934,7 @@
                 }
 
 
-                <div class="bio">
-                    ${escapeHTML(bio)}
-                </div>
+                <div class="bio"></div>
 
 
                 <div class="member-since">
@@ -987,6 +953,11 @@
         // LOAD USER POSTS
         // ======================================
 
+        applyProfileOptions(profileArea, data);
+        const member = await MC.viewer();
+        await MC.relationships(profileArea, data.user_id, member);
+        await loadDiscography(profileArea, data);
+        profileArea.append(MC.discussion("guestbook",data.user_id,member,data.user_id));
         await loadUserPosts(
             data.user_id,
             data
@@ -1005,14 +976,26 @@
         profile
     ) {
 
+        const {data: {user: viewer}} = await supabaseClient.auth.getUser();
+        if (!viewer) {
+            const prompt = document.createElement("a");
+            prompt.href = "account.html";
+            prompt.textContent = "Sign in to view posts";
+            document.getElementById("profileArea").append(prompt);
+            return;
+        }
+        if (viewer.id !== userId) {
+            const link = document.createElement("a");
+            link.href = "inbox.html?peer=" + encodeURIComponent(userId);
+            link.textContent = "Send a private message";
+            document.querySelector(".profile-information").append(link);
+        }
         const {
             data: posts,
             error
         } = await supabaseClient
             .from("posts")
-            .select(
-                "id, user_id, content, created_at"
-            )
+            .select("*")
             .eq(
                 "user_id",
                 userId
@@ -1113,6 +1096,7 @@
         // CREATE POSTS
         // ======================================
 
+        await attachTrackDetails(posts);
         for (
             const post of posts
         ) {
@@ -1296,8 +1280,7 @@
                 "post-content";
 
 
-            content.textContent =
-                post.content;
+            MC.mentions(content,post.content);
 
 
 
@@ -1315,6 +1298,10 @@
             );
 
 
+            postElement.id="post-"+post.id;
+            renderPostMedia(postElement, post);
+            postElement.append(MC.discussion("post",post.id,viewer,post.user_id));
+            postActions(postElement, post, viewer, loadProfile);
             postsSection.appendChild(
                 postElement
             );

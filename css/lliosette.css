@@ -1,73 +1,12 @@
-body {
-    text-align: center;
-    color: white;
-    background-color: black;
-    padding-top: 20px;
-}
-
-h1 {
-    font-family: 'Verdana', sans-serif;
-    font-weight: bold;
-    font-size: 72px;
-    margin-bottom: 20px;
-    background: linear-gradient(
-        90deg,
-        red,
-        orange,
-        yellow,
-        green,
-        cyan,
-        blue,
-        violet,
-        red
-    );
-    background-size: 400% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: rainbow 16s linear infinite;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
-
-    filter:
-    drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-}
-
-@keyframes rainbow {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    100% {
-        background-position: 400% 50%;
-    }
-}
-
-p {
-    font-family: 'Verdana', sans-serif;
-    margin-bottom: 30px;
-}
-
-.page {
-    text-align: center;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 60px 20px;
-}
-
-h2 {
-    margin-bottom: 40px;
-}
-
-@media (max-width: 600px) {
-    h1 {
-        font-size: 44px;
-    }
-
-    .page {
-        padding: 40px 16px;
-    }
-
-    audio {
-        max-width: 100%;
-    }
-}
+body { background:#18151b; color:#f4eff1; margin:0; font:1rem/1.6 Verdana,Arial,sans-serif; }
+.page { width:min(62rem,calc(100% - 2.5rem)); margin:clamp(1.4rem,4vw,3rem) auto; }
+.artist-heading { border-bottom:1px solid #8a788d; padding-bottom:1.2rem; }
+.artist-heading h1 { margin:0; font:italic clamp(2rem,4vw,3rem)/1.03 Georgia,serif; color:#f1d7eb; letter-spacing:normal; }
+.release { padding:1.1rem 0 1.5rem; border-bottom:1px solid #8a788d; }
+.release h2,.artist-notes h2 { font:normal 1.85rem Georgia,serif; margin:.5rem 0 1rem; }
+.song { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.8rem 2rem; margin-bottom:.8rem; }
+.song h3 { margin:0; font-size:1.35rem; }
+.song p { margin:.25rem 0; color:#d3c5cf; }
+.page .play-record { background:#e6c6e2; color:#262029; border:0; cursor:pointer; font:bold 1rem Arial,sans-serif; padding:.85rem 1.1rem; }
+.page a { color:#ead2e7; text-underline-offset:3px; }
+.artist-notes { max-width:70ch; padding:1.25rem 0 2rem; }

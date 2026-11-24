@@ -4,21 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Cata</title>
-    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <link rel="stylesheet" type="text/css" href="../css/records.css">
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
 
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script>
+    <link rel="stylesheet" href="../css/listening-room.css">
+    <script src="../js/social.js"></script>
+    <script src="../js/listening-room.js" defer></script>
+<link rel="stylesheet" href="../css/renaissance.css">
+    <link rel="stylesheet" href="../css/orbit.css">
+    <script src="../js/orbit.js" defer></script>
 </head>
 
-<body>
+<body class="record-home orbit-home">
 
     <!-- TOP BAR -->
     <header class="site-header">
-        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html" aria-current="page">Home</a>
+            <a href="../html/articles.html">Articles</a>
             <a href="posts.html">Posts</a>
             <a href="chat.html">Chat</a>
             <a href="account.html" id="accountButton">Account</a>
@@ -26,95 +35,55 @@
     </header>
 
 
-    <h1>Welcome to Multi-Cata!</h1>
-
-    <p>
-        quick update, added posts and fixed one account for dorkHallow.
-    </p>
-
-
-    <div class="secret1">
-        <img src="../landingimages/mc0.4.1.png" alt="Multi-Cata Logo">
-        <a href="secret.html" class="secret-button" aria-label="Open secret page"></a>
+    <div class="logo-field" aria-hidden="true">
+        <div class="logo-track"><img class="drifting-logo" src="../images/mCata-logo-320.webp" srcset="../images/mCata-logo-320.webp 1x, ../images/mCata-logo-640.webp 2x" alt="" width="320" height="320" draggable="false"></div>
     </div>
-
-
-    <div class="buttons">
-
-        <a class="home-action" href="lliosette.html">Visit LLiosette</a>
-        <a class="home-action" href="dorianhallow.html">Visit Dorian Hallow</a>
-        <a class="home-action" href="characters.html">Characters</a>
-
-    </div>
-
-
-    <h1>Multi-Cata Content:</h1>
-
-    <p>
-        Add some submissions Dorian Hallow, like a preview to your comic and such.
-    </p>
-
-
-    <script>
-
-        // Your Supabase information
-        const SUPABASE_URL = "https://ncmizvdipzjwiknslohn.supabase.co";
-        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_l2Bi2NHypj5wHzOqE2U_nw_CFXaF1T-";
-
-        const supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY
-        );
-
-
-        async function updateAccountButton() {
-
-            const accountButton =
-                document.getElementById("accountButton");
-
-            try {
-                const {
-                    data: { user },
-                    error: authError
-                } = await supabaseClient.auth.getUser();
-
-                if (authError) {
-                    throw authError;
-                }
-
-                if (!user) {
-                    accountButton.textContent = "Sign In";
-                    return;
-                }
-
-                const { data: profile, error } = await supabaseClient
-                    .from("profiles")
-                    .select("username")
-                    .eq("user_id", user.id)
-                    .maybeSingle();
-
-                if (error) {
-                    throw error;
-                }
-
-                accountButton.textContent =
-                    profile && profile.username ? "@" + profile.username : "Account";
-            } catch (error) {
-                if ((error.message || "").toLowerCase().includes("auth session missing")) {
-                    accountButton.textContent = "Sign In";
-                    return;
-                }
-                console.error("Could not update account navigation:", error);
-                accountButton.textContent = "Account";
-            }
-
-        }
-
-
-        updateAccountButton();
-
-    </script>
-
+    <main class="portal">
+        <h1 class="visually-hidden">MultiCata</h1>
+        <div class="welcome-print">
+            <img src="../landingimages/mcata0.5.png" width="1920" height="1080"
+                 alt="MultiCata v0.5" fetchpriority="high">
+            <a href="secret.html" class="secret-button" aria-label="Open secret page"></a>
+        </div>
+        <aside class="update-strip"><h2>Website updates</h2><p>You can now <a href="articles.html">read articles</a> and <a href="writing.html">apply to write</a> from your MultiCata account.</p></aside>
+        <div class="flight-deck">
+            <div class="orbit-window">
+                <p class="orbit-splash" id="orbit-splash"></p>
+                <div class="orbit-stage" role="img" aria-label="Nart and Saturn Bart orbit the stationary mCata logo">
+                    <div class="orbit-scene" aria-hidden="true">
+                        <img class="orbital-logo" src="../images/mCata-logo-320.webp" srcset="../images/mCata-logo-320.webp 1x, ../images/mCata-logo-640.webp 2x" width="320" height="320" alt="">
+                        <img class="rotor nart" src="../images/orbitnart-128.webp" srcset="../images/orbitnart-128.webp 1x, ../images/orbitnart-256.webp 2x" alt="" width="128" height="128">
+                        <img class="rotor bart" src="../images/saturnbart-144.webp" srcset="../images/saturnbart-144.webp 1x, ../images/saturnbart-288.webp 2x" alt="" width="144" height="144">
+                    </div>
+                </div>
+            </div>
+            <div class="flight-index">
+            <nav class="contents" aria-label="On this page"><h2>On this page</h2>
+                <a href="#music">Music</a><a href="#reading">Articles</a><a href="#chats">Messages</a><a href="#posts">Posts</a><a href="#directory">Creators &amp; characters</a>
+            </nav>
+            </div>
+        </div>
+        <div class="drift-lane" aria-hidden="true"></div>
+        <div class="portal-grid">
+            <div class="feed-column listen-column">
+            <section id="music" class="station music-station"><header><h2>Music</h2><a href="music.html">All Music <span aria-hidden="true">↗</span></a></header><div data-library="home"></div></section>
+            <section id="chats" class="station chat-station"><header><h2>Messages</h2></header><div id="home-inbox"></div><footer><a href="inbox.html">Private messages</a><a href="chat.html">Community chat</a></footer></section>
+            </div><div class="feed-column read-column">
+            <section id="reading" class="station reading-station"><header><h2>Articles</h2><a href="articles.html">All Articles <span aria-hidden="true">↗</span></a></header><div data-article-list data-preview></div></section>
+            <section id="posts" class="station post-station"><header><h2>Posts</h2><a href="posts.html">All Posts <span aria-hidden="true">↗</span></a></header><div id="recentPosts"></div></section>
+            </div>
+        </div>
+        <section id="directory" class="directory creator-register">
+            <h2>Creators &amp; characters</h2>
+            <section class="creator-list"><h3>Community creators</h3><div id="home-creators"></div></section>
+            <div class="archive-shelf"><section><h3>Creator pages</h3><a href="lliosette.html">LLiosette</a><a href="dorianhallow.html">Dorian Hallow</a></section>
+                <a class="art-link" href="characters.html"><img data-near-src="../images/nart-directory.webp" alt="" loading="lazy" width="384" height="288"><span>Character gallery ↗</span></a>
+                <a class="art-link" href="../catssaga/Endure().png" target="_blank" rel="noopener"><img data-near-src="../images/cats-saga-print.webp" loading="lazy" width="512" height="396" alt="Original CatsSaga promo artwork"><span>View full-size CatsSaga artwork (opens in a new tab)</span></a>
+            </div>
+        </section>
+    </main>
+    <script src="../js/articles.js" defer></script>
+    <script src="../js/home.js" defer></script>
     <!-- EVIL SECRETTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT EVIL "HELL" -->
 
     <script>
@@ -150,7 +119,7 @@
 })();
 </script>
 
-    <img src="../catssaga/Endure().png" alt="CatsSaga promo">
+
 
 </body>
 </html>

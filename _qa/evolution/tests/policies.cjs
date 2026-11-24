@@ -1,0 +1,36 @@
+const {PGlite}=require('@electric-sql/pglite'), fs=require('fs'), assert=require('node:assert/strict');
+(async()=>{
+const db=new PGlite();const run=s=>db.exec(s), rows=async s=>(await db.query(s)).rows;
+await run(`create schema auth;create schema storage;create role anon;create role authenticated;create role service_role bypassrls;
+create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+create table storage.objects(bucket_id text,name text);create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;
+create table public.profiles(id uuid primary key,user_id uuid, username text, profile_picture text);
+create table public.posts(id uuid primary key,user_id uuid,content text,created_at timestamptz default now());
+grant usage on schema auth, storage to anon,authenticated;
+grant select,insert,delete on storage.objects to authenticated;alter table storage.objects enable row level security;
+grant select,insert,delete on public.posts to authenticated;alter table public.posts enable row level security;
+create policy read on public.posts for select to authenticated using(true);
+create policy insertown on public.posts for insert to authenticated with check(user_id=auth.uid());
+create policy del on public.posts for delete to authenticated using(user_id=auth.uid());
+insert into storage.buckets(id,name) values('avatars','avatars');`);
+for(const f of fs.readdirSync('supabase/migrations').sort())await run(fs.readFileSync('supabase/migrations/'+f,'utf8'));
+const ids=[1,2,3].map(n=>'00000000-0000-4000-8000-00000000000'+n),[a,b,c]=ids;
+await run('insert into auth.users values '+ids.map(i=>"('"+i+"')").join(','));
+const login=id=>run("reset role;set role authenticated;set test.uid='"+id+"'");
+const send=(x,y)=>run("insert into private_messages(sender,recipient,body) values('"+x+"','"+y+"','hello')");
+await login(a);await send(a,b);await assert.rejects(send(b,a));
+const [{id}]=await rows('select id from private_messages');await login(c);
+assert.equal((await rows('select * from private_messages')).length,0);
+await assert.rejects(run("insert into message_reports(message_id,reporter,reason) values('"+id+"','"+c+"','test')"));
+await login(b);assert.equal(Number((await rows('select * from inbox_threads()'))[0].unread),1);
+await run("update private_messages set is_read=true");assert.equal(Number((await rows('select * from inbox_threads()'))[0].unread),0);
+await assert.rejects(run("update private_messages set body='changed'"));await run("insert into message_reports(message_id,reporter,reason) values('"+id+"','"+b+"','reason')");
+await assert.rejects(rows("select * from message_reports"));
+await run("insert into message_blocks values('"+b+"','"+a+"')");await assert.rejects(send(b,a));await login(a);await assert.rejects(send(a,b));assert.equal((await rows('select * from message_blocks')).length,0);
+await run("insert into posts(id,user_id,content) values('"+a+"','"+a+"','draft')");await run("update posts set content='edited'");await login(b);await run("update posts set content='other'");await run("delete from posts");assert.equal((await rows('select content from posts'))[0].content,'edited');
+await login(a);const path=a+'/'+c+'.mp3';await run("insert into storage.objects values('creator-music','"+path+"')");
+await run("insert into tracks(user_id,title,audio_path) values('"+a+"','Test','"+path+"')");
+await login(b);await assert.rejects(run("insert into storage.objects values('creator-music','"+path+"')"));await assert.rejects(run("insert into tracks(user_id,title,audio_path) values('"+a+"','Test2','"+path+"')"));
+await run("reset role;set role anon");assert.equal((await rows('select title from tracks')).length,1);await assert.rejects(rows('select * from private_messages'));await db.close();console.log('All workspace migrations and legacy cross-account policy checks passed');
+})().catch(e=>{console.error(e.message,e.detail);process.exitCode=1})

@@ -7,34 +7,39 @@
     <link rel="stylesheet" type="text/css" href="../css/characters.css">
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
+    <script src="../js/player.js" defer></script>
+<link rel="stylesheet" href="../css/renaissance.css">
 </head>
 <body>
     <header class="site-header">
-        <a class="site-brand" href="../index.html">Multi-Cata</a>
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
         <a class="back-button" data-back-button href="index.html">Back</a>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
+            <a href="../html/articles.html">Articles</a>
             <a href="posts.html">Posts</a>
             <a href="chat.html">Chat</a>
             <a href="account.html">Account</a>
         </nav>
     </header>
 
-    <h1>Characters - MultiCata</h1>
+    <main class="character-album"><h1>Characters - MultiCata</h1>
 
     <div class="character-buttons">
-        <button type="button" onclick="showCharacter('Nart')">Nart</button>
-        <button type="button" onclick="showCharacter('Amanda')">Amanda</button>
+        <button type="button" aria-pressed="false" onclick="showCharacter('Nart')"><img src="../images/nart.jpeg" alt="">Nart</button>
+        <button type="button" aria-pressed="false" onclick="showCharacter('Amanda')"><img src="../images/amanda.jpg" alt="">Amanda</button>
     </div>
 
       <div id="character-info">
-        <h2>Select a character TO VIEW THEIR EVIL BACKSTORY.</h2>
+        <h2>Choose a character to read their backstory.</h2>
     </div>
 
+    </main>
     <script>
         function showCharacter(character) {
 
             const info = document.getElementById("character-info");
+            for (const button of document.querySelectorAll(".character-buttons button")) button.setAttribute("aria-pressed", String(button.textContent===character));
 
             if (character === "Nart") {
                 info.innerHTML = `

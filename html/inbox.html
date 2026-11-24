@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Private messages &middot; Multi-Cata</title>
+    <link rel="stylesheet" href="../css/site.css">
+    <script src="../js/site.js" defer></script><script src="../js/player.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/backend.js"></script><script src="../js/inbox.js" defer></script>
+    <link rel="stylesheet" href="../css/community.css">
+    <link rel="stylesheet" href="../css/listening-room.css">
+<link rel="stylesheet" href="../css/renaissance.css">
+</head><body class="inbox community-paper"><header class="site-header">
+        <a class="site-brand" href="../html/index.html">Multi-Cata</a>
+        <a class="back-button" data-back-button href="index.html">Back</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="../html/articles.html">Articles</a>
+            <a href="posts.html">Posts</a>
+            <a href="chat.html">Chat</a>
+            <a href="account.html" id="accountButton">Account</a>
+        </nav>
+    </header>
+<main><h1>Private messages</h1><nav id="threads" aria-label="Conversations"></nav>
+<h2 id="conversation"></h2><button hidden id="block"></button><button hidden id="older">Load earlier messages</button>
+<ol id="history"></ol><form id="send" hidden><label>Message<textarea name="body" required maxlength="2000"></textarea></label>
+<button name="submitButton">Send</button></form><p id="status" role="status"></p></main></body></html>
