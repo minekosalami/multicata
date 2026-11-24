@@ -52,23 +52,29 @@ const {server,openVisitor}=require('./runtime.cjs');
   const publisher=artist.locator('#publishMusic');
   await publisher.getByLabel('Track title').fill('Fixture upload');
   await publisher.getByLabel('Release artwork').setInputFiles('images/amanda.jpg');
-  const cap=20*1024*1024;
+  const cap=50*1024*1024;
   const bucket=await db.query("select file_size_limit,allowed_mime_types from storage.buckets where id='creator-music'");
   assert.equal(Number(bucket.rows[0].file_size_limit),cap);
   assert.deepEqual(bucket.rows[0].allowed_mime_types.slice().sort(),
     ['audio/flac','audio/mp4','audio/mpeg','audio/ogg','audio/wav']);
-  const recording=Buffer.alloc(cap+1);
-  fs.readFileSync('audio/GrassCatsPopM.mp3').copy(recording);
-  const song={name:'fixture.mp3',mimeType:'audio/mpeg',buffer:recording};
+  const song=path.join(require('node:os').tmpdir(),'multicata-'+require('node:crypto').randomUUID()+'.mp3');
   const storedObjects=()=>db.query('select count(*) from storage.objects');
   const beforeUpload=await storedObjects();
-  await publisher.getByLabel('Audio file').setInputFiles(song);
-  await act(artist,'Publish track').click();
-  await publisher.getByText('Choose a song that is 20 MB or smaller.').waitFor();
-  assert.deepEqual((await storedObjects()).rows,beforeUpload.rows);
-  await publisher.getByLabel('Audio file').setInputFiles({...song,buffer:recording.subarray(0,cap)});
-  await act(artist,'Publish track').click();
-  await artist.getByRole('link',{name:'View track on profile',exact:true}).click();await act(artist,'Play Fixture upload').waitFor();
+  fs.copyFileSync('audio/GrassCatsPopM.mp3',song);
+  try {
+    fs.truncateSync(song,cap+1);
+    await publisher.getByLabel('Audio file').setInputFiles(song);
+    await act(artist,'Publish track').click();
+    await publisher.getByText('Choose a song that is 50 MB or smaller.').waitFor();
+    assert.deepEqual((await storedObjects()).rows,beforeUpload.rows);
+    fs.truncateSync(song,cap);
+    await publisher.getByLabel('Audio file').setInputFiles(song);
+    await act(artist,'Publish track').click();
+    await artist.getByRole('link',{name:'View track on profile',exact:true}).click();
+    await act(artist,'Play Fixture upload').waitFor();
+  } finally {
+    fs.unlinkSync(song);
+  }
   await artist.getByRole('link',{name:'Track details and comments'}).first().click();
   await artist.locator('.comment-form textarea').fill('Notes on my recording');await act(artist,'Comment').click();
   await artist.getByText('Notes on my recording').waitFor();

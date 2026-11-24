@@ -88,7 +88,7 @@ async function recordingUpload(file) {
     const mimeTypes = {mp3:"audio/mpeg", wav:"audio/wav", flac:"audio/flac", m4a:"audio/mp4",
         ogg:"audio/ogg", oga:"audio/ogg", opus:"audio/ogg"};
     if (!Object.hasOwn(mimeTypes, extension)) throw new Error("Choose an MP3, WAV, FLAC, M4A, or Ogg audio file.");
-    if (file.size > 20 * 1024 * 1024) throw new Error("Choose a song that is 20 MB or smaller.");
+    if (file.size > 50 * 1024 * 1024) throw new Error("Choose a song that is 50 MB or smaller.");
 
     const bytes = new Uint8Array(await file.slice(0, 300).arrayBuffer());
     const header = String.fromCharCode(...bytes);

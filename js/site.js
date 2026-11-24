@@ -56,7 +56,7 @@ if (nav) {
         for (const [label, mark, destination] of [
             ["Write a post", "✎", "posts.html?compose=post"],
             ["Post an image", "▧", "posts.html?compose=image"],
-            ["Upload a song", "♫", "account.html?compose=music&v=e1563fa"],
+            ["Upload a song", "♫", "account.html?compose=music&v=audio-50mb"],
             ["Write an article", "¶", "writing.html?compose=article"]
         ]) {
             const a = document.createElement("a");
