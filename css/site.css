@@ -195,3 +195,43 @@ html { scroll-padding-top:7rem; }
  .site-header>.site-nav>a {padding-inline:.2rem;}
  .site-header>.site-nav>.member-menu>summary {padding-inline:.15rem;}
 }
+
+.site-header .brand-tools { position:relative; display:flex; align-items:center; flex:none; gap:.35rem; }
+.create-menu > summary {
+    box-sizing:border-box; display:grid; place-items:center; width:44px; height:44px;
+    cursor:pointer; list-style:none; color:#214542;
+    background:#ffdfa6; border:2px solid #193f41; border-radius:50%;
+    box-shadow:inset 0 0 0 2px #fff4cf, 0 2px #092e30;
+}
+.create-menu > summary::before, .create-menu > summary::after {
+    content:""; grid-area:1/1; width:17px; height:3px; background:currentColor; border-radius:2px;
+}
+.create-menu > summary::after { transform:rotate(90deg); }
+.create-menu > summary::-webkit-details-marker { display:none; }
+.create-menu > summary:hover { background:#fff0bf; }
+.create-menu[open] > summary { background:#d9c8ec; }
+.create-menu[open] > summary::before { transform:rotate(45deg); }
+.create-menu[open] > summary::after { transform:rotate(135deg); }
+.create-menu > summary:focus-visible { outline:2px solid #fff4cf; outline-offset:2px; }
+.create-choices {
+    position:absolute; top:calc(100% + 6px); left:0; z-index:8; box-sizing:border-box;
+    padding:.35rem; width:min(13.5rem,90vw); max-height:55vh; overflow:auto;
+    background:#fff9e9; border:2px solid #285350; border-radius:8px; box-shadow:3px 4px #15363877;
+}
+.site-header .create-choices a {
+    box-sizing:border-box; display:flex; align-items:center; gap:.65rem; min-height:46px; padding:.35rem .45rem;
+    border-radius:4px; font:700 .94rem/1.25 Arial,sans-serif; color:#234844; background:transparent; text-decoration:none;
+}
+.create-icon {
+    display:grid; place-items:center; width:1.9rem; height:1.9rem; flex:none;
+    background:#cee9d9; border:1px solid #78978a; border-radius:5px; font:700 1.2rem/1 Georgia,serif;
+}
+.create-choices a:nth-child(2) .create-icon { background:#c4e8ef; }
+.create-choices a:nth-child(3) .create-icon { background:#ffccaf; }
+.create-choices a:nth-child(4) .create-icon { background:#d9c8ec; }
+.site-header .create-choices a:is(:focus-visible,:hover) { background:#e9e5cf; outline-offset:-2px; }
+
+/* Reserve the player's corner when a page also has a Back link. */
+@media (max-width:375px) {
+    .site-header:has(.brand-tools) > .back-button { margin-inline-end:6rem; }
+}

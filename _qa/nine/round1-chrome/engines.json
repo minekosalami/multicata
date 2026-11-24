@@ -1,0 +1,28 @@
+[
+  {
+    "name": "chromium",
+    "checks": [
+      {
+        "task": "Guest gallery, articles, keyboard menu and reduced motion",
+        "pass": true,
+        "observation": "QA article 2"
+      },
+      {
+        "task": "Streaming MP3 after a failed source",
+        "pass": true,
+        "observation": "Advanced on second track"
+      },
+      {
+        "task": "Invalid upload retains title and enables retry",
+        "pass": true
+      },
+      {
+        "task": "Retry article list after second author lookup fails",
+        "pass": false,
+        "message": "QA article 2, QA article 2, QA article 1\n\n3 !== 2\n"
+      }
+    ],
+    "errors": [],
+    "version": "158.0.8127.38"
+  }
+]

@@ -204,16 +204,23 @@
             View My Profile
         </a>
 
-        <br>
-
-        <details><summary>Publish music</summary>
+        <details class="music-publisher"><summary>Publish music</summary>
             <form id="publishMusic">
-                <label>Title <input name="title" maxlength="150" required></label>
-                <label>Release (optional) <input name="releaseName" maxlength="150"></label>
-                <label>Release artwork (optional)<input name="art" type="file" accept="image/jpeg,image/png"></label>
-                <label>Credits (optional) <textarea name="credits" maxlength="1000"></textarea></label>
-                <label>MP3 file (up to 50 MB) <input name="recording" type="file" accept=".mp3,audio/mpeg" required></label>
-                <button name="publish">Publish track</button><p role="status"></p>
+                <label>Track title <input name="title" maxlength="150" required></label>
+                <div class="recording-field">
+                    <label for="song-file">MP3 file</label>
+                    <span id="song-limit">Up to 20 MB per song</span>
+                    <input id="song-file" name="recording" type="file" accept=".mp3,audio/mpeg" aria-describedby="song-limit" required>
+                </div>
+                <fieldset>
+                    <legend>Optional details</legend>
+                    <label>Release name <input name="releaseName" maxlength="150"></label>
+                    <label>Credits <textarea name="credits" rows="2" maxlength="1000"></textarea></label>
+                    <label>Release artwork <input name="art" type="file" accept="image/jpeg,image/png" aria-describedby="art-limit"></label>
+                    <small id="art-limit">JPEG or static PNG, up to 5 MB</small>
+                </fieldset>
+                <button type="submit" name="publish">Publish track</button>
+                <p role="status"></p>
             </form>
         </details>
         <div class="account-links"><a href="writing.html">Writing</a> · <a href="favorites.html">Favorite Music</a> · <a href="notices.html">Notifications</a> · <a href="inbox.html">Private messages</a></div>
@@ -441,6 +448,14 @@
             }
 
             const next = new URLSearchParams(location.search).get("next");
+            const composerDestinations = new Map([
+                ["post", "posts.html?compose=post"], ["image", "posts.html?compose=image"],
+                ["article", "writing.html?compose=article"]
+            ]);
+            if (composerDestinations.has(next)) {
+                location.replace(composerDestinations.get(next));
+                return;
+            }
             if (["posts","chat","inbox"].includes(next)) {
                 location.replace(next + ".html");
                 return;
@@ -540,6 +555,11 @@
             user.email;
 
 
+        if (new URLSearchParams(location.search).get("compose") === "music") {
+            const form = document.getElementById("publishMusic");
+            form.closest("details").open = true;
+            form.elements.title.focus();
+        }
         await ensureProfile(user);
 
     }

@@ -121,6 +121,48 @@ body :is(.account-content,.container,.profile-container,.chat-container),body.in
 .community-paper :is(.composer,#appearance,.post,.profile-card){border:1px solid #a3b4a6;background:#f5f5e7;padding:clamp(.75rem,2vw,1.25rem)}
 .community-paper .account-content details>summary,.community-paper .container details>summary{padding:.5rem .7rem;background:#dcebd9;border-left:5px double #779885}
 .community-paper .account-content details{border:0;padding:0}
+.community-paper .account-content .music-publisher {
+    border:1px solid #527670; border-radius:6px; background:#fffdf6; box-shadow:2px 3px #47746c33;
+}
+.community-paper .account-content .music-publisher > summary {
+    display:flex; align-items:center; gap:.7rem; min-height:44px; padding:.55rem .9rem;
+    list-style:none; background:#d6eadd; border:0; border-radius:5px; color:var(--pine);
+    font:700 1.3rem/1.2 Georgia,serif;
+}
+.music-publisher > summary::-webkit-details-marker { display:none; }
+.music-publisher > summary::before {
+    content:""; width:1.65rem; height:1.65rem; flex:none; border:1px solid #2a5550; border-radius:50%;
+    background:radial-gradient(circle,#244b46 0 7%,#ffd2ae 9% 28%,#284f4e 30% 47%,#678a80 49% 52%,#284f4e 54%);
+}
+.music-publisher > summary::after {
+    content:""; width:.48rem; height:.48rem; margin-inline:auto .25rem; border:solid currentColor;
+    border-width:0 2px 2px 0; transform:rotate(45deg);
+}
+.music-publisher[open] > summary::after { transform:rotate(225deg); }
+.music-publisher #publishMusic {
+    display:grid; gap:1rem; max-width:none; margin:0; padding:clamp(.85rem,3vw,1.3rem); text-align:left;
+}
+#publishMusic :is(label,textarea,input) { margin:0; }
+#publishMusic label { display:grid; gap:.35rem; color:var(--pine); }
+#publishMusic .recording-field {
+    display:flex; align-items:baseline; flex-wrap:wrap; gap:.5rem .75rem;
+    padding:.85rem; border:1px dashed #738f80; border-radius:4px; background:#eff5e9;
+}
+#song-limit,#art-limit { color:#465f58; font:normal .84rem/1.35 Arial,sans-serif; }
+#publishMusic input[type=file] { width:100%; min-width:0; padding:.35rem; font:normal .9rem/1.4 Arial,sans-serif; }
+#publishMusic input::file-selector-button {
+    padding:.5rem .65rem; margin-inline-end:.6rem; border:1px solid #709187; border-radius:3px;
+    background:#dceadd; color:var(--pine); cursor:pointer; font-weight:700;
+}
+#publishMusic fieldset {
+    display:grid; gap:.7rem; min-width:0; margin:0; padding:.8rem; border:1px solid #c6cbc0; border-radius:4px;
+}
+#publishMusic legend { padding:0 .3rem; color:var(--muted); font:700 .9rem/1.3 Arial,sans-serif; }
+#publishMusic textarea { height:auto; min-height:3.5rem; resize:vertical; }
+#publishMusic button { justify-self:start; min-height:44px; padding:.65rem 1.2rem; margin:0; color:#fffaf0; background:var(--pine); }
+#publishMusic button:disabled { opacity:.65; }
+#publishMusic [role=status] { margin:0; color:var(--pine); }
+#publishMusic [role=status]:empty { margin-top:-1rem; }
 .editorial-sheet{background:linear-gradient(90deg,#fffaf0 0 10px,#dfd4d7 11px,transparent 12px),var(--cream)!important}
 body .chat-title{border-bottom:3px double #849d98;background:#e3f1e9;padding:.8rem}
 @media(max-width:700px){
@@ -207,7 +249,16 @@ body.community-paper #profileArea.profile-page .profile-information :is(.usernam
 .article-views a { display:inline-flex; align-items:center; min-height:44px; padding:.35rem .85rem; border:2px solid var(--pine); background:var(--cream); color:var(--pine); font-weight:bold; }
 .article-views a[aria-current="page"] { background:var(--sea); }
 .mobile-queue {display:none}
-@media(max-width:600px){.site-nav .mobile-queue{display:inline-flex;min-height:36px;align-items:center}}
+@media(max-width:600px){
+    .site-header:has(.brand-tools) > .site-nav { display:flex; flex-wrap:wrap; }
+    .site-header:has(.brand-tools) > .site-nav > a { flex:1 0 auto; }
+    .site-header:has(.brand-tools) .member-menu { margin-inline-start:auto; }
+    .site-header .site-nav .mobile-queue {
+        display:inline-flex; min-height:44px; margin:0; align-items:center; padding:.35rem .5rem;
+        font:700 .8rem/1 Arial,sans-serif; background:#ffddc5; color:var(--pine);
+        border:1px solid #24474a; border-radius:3px; cursor:pointer;
+    }
+}
 .portal-grid .collapsed-widget > :not(header,h2){display:none}
 .portal-grid .collapsed-widget{align-self:start;padding-bottom:0}
 .flight-index details label,.article-views label,.editorial-sheet details > div > a,.manuscripts section > a{display:block}

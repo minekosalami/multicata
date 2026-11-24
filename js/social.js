@@ -104,7 +104,13 @@ const MC = (() => {
             for(const row of mine)state.get(row.target).choice=row.value;
             return state;
         };
-        const state = await read(ids);
+        if (!ids.length) return () => document.createDocumentFragment();
+        let state;
+        try { state = await read(ids); }
+        catch {
+            // Reactions are optional. Keep the article and its discussion readable.
+            return () => document.createDocumentFragment();
+        }
         return id => {
             const bar=node("div",null,"reaction-bar"),status=feedback();
             const buttons=[1,-1].map(value=>button("",async()=>{

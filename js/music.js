@@ -68,13 +68,15 @@ async function publishTrack(event) {
     fields.publish.disabled = true;
     status.replaceChildren();
     try {
-        const {data:{user}} = await supabaseClient.auth.getUser();
-        if (!user) throw new Error("Sign in to publish music.");
         const title = fields.title.value.trim();
         const file = fields.recording.files[0];
-        if (!title || !file || file.size > 50 * 1024 * 1024 || !/\.mp3$/i.test(file.name)) throw new Error("Choose an MP3 under 50 MB and enter a title.");
+        if (!title) throw new Error("Enter a track title.");
+        if (!file || !/\.mp3$/i.test(file.name)) throw new Error("Choose an MP3 file.");
+        if (file.size > 20 * 1024 * 1024) throw new Error("Choose a song that is 20 MB or smaller.");
         const bytes = new Uint8Array(await file.slice(0,3).arrayBuffer());
         if (!(bytes[0] === 255 && (bytes[1] & 224) === 224) && String.fromCharCode(...bytes) !== "ID3") throw new Error("This file is not an MP3.");
+        const {data:{user}} = await supabaseClient.auth.getUser();
+        if (!user) throw new Error("Sign in to publish music.");
         const path = user.id + "/" + crypto.randomUUID() + ".mp3";
         status.textContent = "Uploading recording…";
         const bucket = supabaseClient.storage.from("creator-music");

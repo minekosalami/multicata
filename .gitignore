@@ -24,3 +24,17 @@ _qa/**
 !_qa/renaissance/editorial-policies.cjs
 !_qa/renaissance/interactions.cjs
 !_qa/renaissance/review.cjs
+
+# Nine-persona QA sources and selected before/after evidence.
+!_qa/nine/*.cjs
+!_qa/nine/report.md
+!_qa/nine/*/observations.json
+!_qa/nine/*/engines.json
+!_qa/nine/baseline/article-outage.jpg
+!_qa/nine/baseline/editor-saved.jpg
+!_qa/nine/baseline/home.jpg
+!_qa/nine/round1/article-outage.jpg
+!_qa/nine/round1/editor-saved.jpg
+!_qa/nine/round4/home.jpg
+!_qa/nine/soak.json
+!_qa/nine/native-zoom.log

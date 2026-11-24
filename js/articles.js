@@ -122,6 +122,7 @@
                 else {
                     rows=params.has("release")?await MC.rpc("release_liner_notes",{recording:params.get("release"),start_at:start}):await MC.rpc("browse_articles",{search_text:params.get("q")||"",selected_topic:params.get("topic")||"",selected_series:params.get("series")||"",writer:params.get("writer")||null,following_only:params.get("sort")==="following",featured_only:featured,most_liked:params.get("sort")==="liked",start_at:start});
                 }
+                const batch=document.createDocumentFragment();
                 for(const row of rows.slice(0,limit)){
                     const entry=node("article"),title=node("h3"),meta=node("p");
                     title.append(link(row.title,url(row.id)));meta.append(preview?link(row.username?"@"+row.username:"Member profile",profile(row.author)):await byline(row.author)," · "+date(row.published_at));entry.append(title,meta);
@@ -150,8 +151,10 @@
                         entry.append(approve);
                     } else if (row.featured && !featured) entry.append(node("strong","Featured"));
                     for(const k of ["topic","series"])if(row[k])entry.append(link(row[k],"articles.html?"+k+"="+encodeURIComponent(row[k])));
-                    list.append(entry);
+                    batch.append(entry);
                 }
+                list.append(batch);
+                more.textContent="Load more articles";
                 if (!rows.length && !start) {
                     if (["q","topic","series","writer","sort","release"].some(k=>params.get(k))) list.append(node("p","No matching articles."));
                     else if (featured) list.append(node("p","No featured articles yet."));
@@ -213,7 +216,7 @@
     }
     async function desk(root,user){
         root.replaceChildren();
-        if(!user){root.append(link("Sign in to write","account.html"));return;}
+        if(!user){root.append(link("Sign in to write","account.html?next=article"));return;}
         const rows=await query(table("articles").select("id,title,published,updated_at").eq("author",user.id).order("updated_at",{ascending:false}));
         const list=node("section",null,"manuscripts");
         list.append(node("h2","Your articles"),link("New draft","writing.html"));
@@ -251,6 +254,7 @@
             count.textContent=w+" words · "+Math.max(1,Math.ceil(w/200))+" min read · "+(n<100?(100-n)+" characters to go":n+" characters");
         }
         function changed(){
+            if(status.querySelector('a'))status.replaceChildren();
             measure();
             try{localStorage.setItem(storageKey(),JSON.stringify(snapshot()));state.textContent="Unsaved changes · recoverable on this device";}
             catch{state.textContent="Unsaved changes · device storage unavailable";}
@@ -258,13 +262,14 @@
         form.addEventListener("input",changed);
         form.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();if(!save.disabled)form.requestSubmit(save);}});
         form.insertBefore(options,save);body.after(count);form.append(state);
+        let recoveryPrompt;
         let backup;
         try{backup=JSON.parse(localStorage.getItem(storageKey()));}catch{}
         if(backup){
             const restore=node("section"),use=button("Restore unfinished writing",()=>{apply(backup);restore.remove();});
             if(row && backup.revision!==row.revision)restore.append(node("p","A newer version was saved. Compare the editor with your recovery copy before restoring it."),node("pre",backup.title+"\n\n"+backup.body));
             restore.append(use,button("Discard recovery copy",()=>{localStorage.removeItem(storageKey());restore.remove();}));
-            form.prepend(restore);
+            recoveryPrompt=restore;form.prepend(restore);
         }
         if(row?.featured)form.insertBefore(node("p","Editing this featured article sends it back for approval."),save);
         const versions=node("details"),items=node("div");
@@ -294,8 +299,9 @@
         share.ontoggle=()=>{if(share.open)shareMenu();};
         measure();
         return {values,changed,state,saved(next,submitted){
+            recoveryPrompt?.remove();
             const edited=JSON.stringify(snapshot())!==submitted;try{localStorage.removeItem(storageKey());}catch{}row=next;
-            if(edited)changed();else state.textContent="Saved";
+            if(edited)changed();else state.textContent="";
         },snapshot:()=>JSON.stringify(snapshot())};
     }
 
@@ -352,6 +358,7 @@
         function labels(){save.textContent=row?.published?"Save changes":"Save draft";publish.textContent=row?.published?"Unpublish":"Publish";}
         labels();form.append(node("h2","Article editor"),field("Title",title),tools,field("Article text (at least 100 characters)",body),media,save,publish,paint,status,preview);root.append(form);
         const extras=writingTools(form,user,row,title,body,status,save);
+        if(new URLSearchParams(location.search).get("compose")==="article")title.focus();
         form.onsubmit=async e=>{
             e.preventDefault();if(save.disabled)return;
             const published=e.submitter===publish?!row?.published:!!row?.published;

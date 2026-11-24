@@ -305,6 +305,8 @@
     // LOAD POSTS
     // ==========================================
 
+    const composeMode = new URLSearchParams(location.search).get("compose");
+    let focusComposer = ["post","image"].includes(composeMode);
     async function loadPosts() {
 
         const {data: {user: viewer}} = await supabaseClient.auth.getUser();
@@ -312,10 +314,14 @@
         document.querySelector(".composer").hidden = !viewer;
         if (!viewer) {
             const link = document.createElement("a");
-            link.href = "account.html?next=posts";
-            link.textContent = "Sign in to view posts.";
+            link.href = "account.html?next=" + (focusComposer ? composeMode : "posts");
+            link.textContent = focusComposer ? "Sign in to post" : "Sign in to view posts.";
             postsContainer.replaceChildren(link);
             return;
+        }
+        if (focusComposer) {
+            focusComposer = false;
+            document.getElementById(composeMode === "image" ? "postImage" : "postContent").focus();
         }
         const choice = document.getElementById("post-filter").value;
         const selected = new URLSearchParams(location.search).get("post");

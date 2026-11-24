@@ -1,0 +1,66 @@
+[
+  {
+    "name": "chromium",
+    "checks": [
+      {
+        "task": "Guest gallery, articles, keyboard menu and reduced motion",
+        "pass": true,
+        "observation": "QA article 2"
+      },
+      {
+        "task": "Streaming MP3 after a failed source",
+        "pass": true,
+        "observation": "Advanced on second track"
+      },
+      {
+        "task": "Invalid upload retains title and enables retry",
+        "pass": true
+      },
+      {
+        "task": "Retry article list after second author lookup fails",
+        "pass": true,
+        "observation": [
+          "QA article 2",
+          "QA article 1"
+        ]
+      }
+    ],
+    "errors": [],
+    "version": "158.0.8127.38"
+  },
+  {
+    "name": "firefox",
+    "checks": [],
+    "errors": [],
+    "blocked": "browserType.launch: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - <launching> C:\\Users\\ellio\\AppData\\Local\\ms-playwright\\firefox-1572\\firefox\\firefox.exe -no-remote -headless -profile C:\\Users\\ellio\\AppData\\Local\\Temp\\playwright_firefoxdev_profile-qDFd66 -juggler-pipe -silent\u001b[22m\n\u001b[2m  - <launched> pid=24328\u001b[22m\n\u001b[2m  - [pid=24328][err] *** You are running in headless mode.\u001b[22m\n"
+  },
+  {
+    "name": "webkit",
+    "checks": [
+      {
+        "task": "Guest gallery, articles, keyboard menu and reduced motion",
+        "pass": true,
+        "observation": "QA article 2"
+      },
+      {
+        "task": "Streaming MP3 after a failed source",
+        "pass": false,
+        "message": "page.waitForFunction: Timeout 6000ms exceeded."
+      },
+      {
+        "task": "Invalid upload retains title and enables retry",
+        "pass": true
+      },
+      {
+        "task": "Retry article list after second author lookup fails",
+        "pass": true,
+        "observation": [
+          "QA article 2",
+          "QA article 1"
+        ]
+      }
+    ],
+    "errors": [],
+    "version": "27.2"
+  }
+]

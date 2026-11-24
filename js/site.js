@@ -42,6 +42,45 @@ if (!nav) {
     try {document.documentElement.classList.toggle("motion-off",localStorage.getItem("multicata-motion")==="off");} catch {}
 }
 if (nav) {
+    const brand = document.querySelector(".site-header .site-brand");
+    if (brand) {
+        const group = document.createElement("div");
+        group.className = "brand-tools";
+        const create = document.createElement("details");
+        create.className = "create-menu";
+        const trigger = document.createElement("summary");
+        trigger.setAttribute("aria-label", "Create");
+        trigger.title = "Create";
+        const choices = document.createElement("div");
+        choices.className = "create-choices";
+        for (const [label, mark, destination] of [
+            ["Write a post", "✎", "posts.html?compose=post"],
+            ["Post an image", "▧", "posts.html?compose=image"],
+            ["Upload a song", "♫", "account.html?compose=music"],
+            ["Write an article", "¶", "writing.html?compose=article"]
+        ]) {
+            const a = document.createElement("a");
+            a.href = new URL("../html/" + destination, document.currentScript.src).href;
+            const icon = document.createElement("span");
+            icon.className = "create-icon";
+            icon.setAttribute("aria-hidden", "true");
+            icon.textContent = mark;
+            a.append(icon, label);
+            choices.append(a);
+        }
+        create.append(trigger, choices);
+        brand.before(group);
+        group.append(brand, create);
+        document.addEventListener("click", e => {
+            if (!create.contains(e.target) || choices.contains(e.target)) create.open = false;
+        });
+        document.addEventListener("focusin", e => {
+            if (!create.contains(e.target)) create.open = false;
+        });
+        document.addEventListener("keydown", e => {
+            if (create.open && e.key === "Escape") { create.open = false; trigger.focus(); }
+        });
+    }
     const menu = document.createElement("details");
     menu.className = "member-menu";
     const summary = document.createElement("summary");
