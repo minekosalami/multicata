@@ -353,6 +353,7 @@
 
     let selectedProfilePictureFile = null;
     let activeAccount = null;
+    let authRevision = 0;
     let currentProfilePictureUrl = null;
 
 
@@ -524,7 +525,18 @@
             return;
         }
 
+        showSignedOut();
+    }
+
+    function showSignedOut() {
         activeAccount = savedAppearance = currentProfilePictureUrl = selectedProfilePictureFile = null;
+        forgetPreviewFiles();
+        document.getElementById("userEmail").textContent = "";
+        document.getElementById("accountUsername").textContent = "";
+        document.getElementById("viewProfileButton").removeAttribute("href");
+        document.getElementById("viewProfileButton").style.display = "none";
+        document.getElementById("memberSince").textContent = "";
+        document.getElementById("email").value = "";
         document.getElementById("password").value = "";
         document.getElementById("signupUsername").value = "";
         document.getElementById("publishMusic").reset();
@@ -1218,13 +1230,14 @@
     // ==========================================
 
     async function checkUser() {
-
+        const revision = authRevision;
         try {
             const {
                 data: { user },
                 error
             } = await supabaseClient.auth.getUser();
 
+            if (revision !== authRevision) return;
             if (error) {
                 if ((error.message || "").toLowerCase().includes("auth session missing")) {
                     document.getElementById("authLoading").style.display = "none";
@@ -1264,14 +1277,14 @@
 
     supabaseClient.auth.onAuthStateChange(
         (event, session) => {
-
-            if (
-                session &&
-                session.user
-            ) {
-
-                setTimeout(() => showLoggedInUser(session.user), 0);
-
+            if (event === "SIGNED_OUT") {
+                authRevision++;
+                showSignedOut();
+            } else if (session?.user) {
+                const revision = ++authRevision;
+                setTimeout(() => {
+                    if (revision === authRevision) showLoggedInUser(session.user);
+                }, 0);
             }
 
         }

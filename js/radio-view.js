@@ -27,7 +27,7 @@ face.innerHTML=`
     </div>`;
 root.querySelector("[data-radio-face]").replaceWith(face.content);
 const time=n=>Math.floor(n/60)+":"+String(Math.floor(n%60)).padStart(2,"0");
-let radio, lastState, user, release;
+let radio, lastState, user, release, lastStationMessage;
 const tell=text=>{find("feedback").textContent=text;};
 function list(name,values,empty){
     find(name).replaceChildren(...(values.length?values:[empty]).map(s=>MC.node("li",s)));
@@ -55,6 +55,8 @@ function display(){
         button.setAttribute("aria-pressed",radio.hasEQ && radio.prefs.bass===preset.bass && radio.prefs.treble===preset.treble);
     }
     if(radio.message)tell(radio.message);
+    else if(lastStationMessage && find("feedback").textContent===lastStationMessage)tell("");
+    lastStationMessage=radio.message;
     if(!hasDetails||state===lastState||!state)return;
     lastState=state;
     const now=find("now");now.replaceChildren();

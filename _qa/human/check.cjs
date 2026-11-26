@@ -66,7 +66,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
     if(r.request().url().startsWith('https://cdn.jsdelivr.net/')){
         // No realtime service in the fixture. Exercise chat history and sending through reload.
         const channel='channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{},';
-        return r.fulfill({contentType:'text/javascript',body:sdk.replace('({auth:{','({'+channel+'auth:{')});
+        const authEvents=sdk.replace('onAuthStateChange(){','onAuthStateChange(callback){window.addEventListener("fixture-signout",()=>callback("SIGNED_OUT",null));');
+        return r.fulfill({contentType:'text/javascript',body:authEvents.replace('({auth:{','({'+channel+'auth:{')});
     }
     return r.request().url().startsWith('http://127.0.0.1:')?r.continue():r.abort();
  });
@@ -80,6 +81,11 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await account.locator('#logInButton').click();await account.locator('#editProfile').waitFor();
  await account.getByText('@RadioFan',{exact:true}).waitFor();
  await account.reload();await account.getByText('@RadioFan',{exact:true}).waitFor();
+ await account.evaluate(()=>{delete localStorage.auth;window.dispatchEvent(new Event('fixture-signout'));});
+ await account.locator('#logInButton').waitFor({timeout:2500});
+ assert(await account.locator('#accountArea').isHidden());
+ await account.locator('#email').fill('local@example.test');await account.locator('#password').fill('local-example-password');
+ await account.locator('#logInButton').click();await account.getByText('@RadioFan',{exact:true}).waitFor();
  await account.evaluate(()=>{const profiles=JSON.parse(localStorage.profiles);profiles[0].username=null;localStorage.profiles=JSON.stringify(profiles);});
  await account.goto(base+'account.html?next=chat');
  await account.getByText(/^Choose a username so people/).waitFor();

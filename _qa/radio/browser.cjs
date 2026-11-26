@@ -68,6 +68,17 @@ const out=process.env.RADIO_QA_DIR||__dirname;
   a.on('requestfinished',async r=>{if(isRecording(r))try{transfer+=(await r.sizes()).responseBodySize;}catch{}});
   await a.goto(url+'index.html');await a.locator('.radio-widget').scrollIntoViewIfNeeded();await a.locator('[data-air].on').waitFor();assert.equal(audioRequests,0);results.homeAudioRequests=audioRequests;
   await a.getByText('Customize homepage',{exact:true}).waitFor();
+  await a.evaluate(async()=>{
+    const station=await multiCataPlayer.getRadio(),rpc=supabaseClient.rpc;
+    await station.refresh();
+    try {
+      supabaseClient.rpc=(name,args)=>name==='radio_state'?Promise.resolve({error:{message:'Fixture outage'}}):rpc(name,args);
+      await station.refresh();
+      if(!document.querySelector('[data-feedback]').textContent.includes('unavailable'))throw Error('Missing connection status');
+    } finally {supabaseClient.rpc=rpc;}
+    await station.refresh();
+    if(document.querySelector('[data-feedback]').textContent)throw Error('Station error persisted after recovery');
+  });
   const aligned=await a.evaluate(()=>{
     const bounds=selector=>document.querySelector(selector).getBoundingClientRect();
     const radio=bounds('.radio-widget'), reference=bounds('.flight-deck'), music=bounds('#music'), posts=bounds('#posts');
