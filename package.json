@@ -5,7 +5,7 @@
     "test": "npm run test:database && npm run test:community && npm run test:homepage",
     "test:stress": "node _qa/nine/stress.cjs && node _qa/nine/engines.cjs && node _qa/nine/soak.cjs",
     "test:database": "node _qa/evolution/tests/policies.cjs && node _qa/next/social-policies.cjs && node _qa/renaissance/editorial-policies.cjs",
-    "test:community": "node _qa/evolution/tests/workflows.cjs && node _qa/next/journeys.cjs final && node _qa/renaissance/interactions.cjs && node _qa/human/check.cjs",
+    "test:community": "node _qa/evolution/tests/workflows.cjs && node _qa/next/journeys.cjs final && node _qa/next/listener-updates.cjs && node _qa/renaissance/interactions.cjs && node _qa/human/check.cjs",
     "test:homepage": "node _qa/family/drift.cjs && node _qa/orbit/orbit-check.cjs && node _qa/navigation/labels.cjs && node _qa/family/visit.cjs after && node _qa/renaissance/review.cjs routes"
   },
   "devDependencies": {

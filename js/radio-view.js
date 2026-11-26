@@ -14,6 +14,7 @@ face.innerHTML=`
         <strong data-title></strong><span data-artist></span>
         <progress data-progress max="1" value="0" aria-label="Broadcast progress"></progress>
         <div class="radio-line"><span data-elapsed>–</span><span data-total>–</span></div>
+        <small data-up-next hidden></small>
     </div>
     <div class="knobs">
         <label><button class="radio-knob" data-power type="button" aria-label="Radio power" aria-pressed="false"></button>Power</label>
@@ -38,6 +39,9 @@ function display(){
     find("air").classList.toggle("on",Boolean(item));
     find("title").textContent=item?.title||"";
     find("artist").textContent=item?.artist||"";
+    const next=find("up-next");
+    next.hidden=!state?.up_next;
+    next.textContent=state?.up_next?"Up next: "+state.up_next:"";
     find("count").textContent=radio.count==null?"":radio.count+" listener"+(radio.count===1?"":"s");
     tick();
     find("power").setAttribute("aria-pressed",radio.tuned);
@@ -76,7 +80,9 @@ function display(){
         }
     }else now.textContent="No broadcast is playing.";
     list("history",state.history.map(h=>h.item.title+" · "+h.item.artist),"No broadcasts yet.");
-    list("scheduled",state.scheduled.map(q=>q.title+" · "+new Date(q.due).toLocaleString()+(q.timing==="exact"?" · Exact time":" · After song ends")),"No scheduled broadcasts.");
+    const scheduled=state.scheduled.map(q=>q.title+" · "+new Date(q.due).toLocaleString()+(q.timing==="exact"?" · Exact time":" · After song ends"));
+    if(!scheduled.length && state.up_next)scheduled.push("Up next: "+state.up_next);
+    list("scheduled",scheduled,"No scheduled broadcasts.");
     const votes=find("votes");votes.replaceChildren();
     if(!state.round||!state.votes.length){votes.textContent=state.manual?"Voting is paused in manual DJ mode.":"Voting is closed.";return;}
     const total=state.votes.reduce((sum,v)=>sum+v.count,0);
@@ -84,9 +90,9 @@ function display(){
         const row=MC.node("div"),bar=document.createElement("progress");bar.max=total||1;bar.value=v.count;bar.setAttribute("aria-label",v.title+" vote share");
         const vote=MC.button(v.selected?"Selected":"Vote",async()=>{try{await MC.rpc("radio_vote",{ballot:state.round,choice:v.id});await radio.refresh();}catch{tell("This vote could not be saved.");}});
         vote.disabled=!user;vote.setAttribute("aria-pressed",v.selected);
-        row.append(MC.node("span",v.title+" · "+v.artist+" · "+v.count+" votes "),vote,bar);votes.append(row);
+        row.append(MC.node("span",v.title+" · "+v.artist+" · "+v.count+(v.count===1?" vote ":" votes ")),vote,bar);votes.append(row);
     }
-    votes.append(MC.node("p",total+" total votes"));
+    votes.append(MC.node("p",total+(total===1?" total vote":" total votes")));
     if(!user)votes.append(MC.link("Sign in to vote","account.html"));
 }
 function tick(){

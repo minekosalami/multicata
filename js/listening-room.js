@@ -42,10 +42,30 @@
         const bar=node("div",null,"catalogue-tools");
         const more=button("Load more music",()=>load(false));
         const sort=node("select");sort.setAttribute("aria-label","Sort music");
+        const catalog=page==="catalogue";
+        const searchText=catalog?(params.get("q")||"").trim():"";
+        function browse(text,order){
+            const destination=new URL("music.html",location.href);
+            if(text)destination.searchParams.set("q",text);
+            if(order!=="recent")destination.searchParams.set("sort",order);
+            if(!window.multiCataPlayer?.navigate(destination.href))location.assign(destination.href);
+        }
         let shuffle, shuffling=false;
         if(!fav){
             for(const [key,label] of [["recent","Recent Music"],["liked","Most Liked Music"],...(user?[["following","Following"]]:[])])sort.add(new Option(label,key));
-            sort.onchange=()=>{mode=sort.value;load(true);};
+            if(catalog){
+                if([...sort.options].some(o=>o.value===params.get("sort")))mode=params.get("sort");
+                sort.value=mode;
+                const form=node("form",null,"music-search");
+                form.setAttribute("role","search");
+                const label=node("label","Song, artist or release"),input=node("input");
+                input.type="search";input.name="q";input.value=searchText;input.maxLength=160;
+                label.append(input);form.append(label,node("button","Search"));
+                if(searchText)form.append(button("Clear",()=>browse("",mode)));
+                form.onsubmit=event=>{event.preventDefault();browse(input.value.trim(),mode);};
+                bar.append(form);
+            }
+            sort.onchange=()=>{if(catalog)browse(searchText,sort.value);else{mode=sort.value;load(true);}};
             bar.append(sort,link("Favorite Music","favorites.html"));
         }else{
             if(!user){root.append(link("Sign in to view Favorite Music","account.html"));return;}
@@ -67,7 +87,8 @@
             if(reset){offset=0;list.replaceChildren();if(shuffle)shuffle.disabled=true;}
             more.disabled=true;more.hidden=true;status.textContent="Loading music…";
             try{
-                const rows=await rpc("music_page",{mode,start_at:offset,take:pageSize+1});
+                const request={mode,start_at:offset,take:pageSize+1};
+                const rows=searchText?await rpc("search_music",{...request,wanted:null,search_text:searchText}):await rpc("music_page",request);
                 if(turn!==generation)return;
                 for(const row of rows.slice(0,pageSize)){
                     const item=recording(row);
@@ -82,7 +103,8 @@
                     list.append(item);
                 }
                 offset+=Math.min(rows.length,pageSize);more.hidden=rows.length<=pageSize;
-                status.textContent=offset?"":fav?"No favorites yet. Use Favorite on a track.":mode==="following"?"No recordings from people you follow yet.":"No recordings yet.";
+                more.textContent="Load more music";
+                status.textContent=offset?"":searchText?"No music matched “"+searchText+"”.":fav?"No favorites yet. Use Favorite on a track.":mode==="following"?"No recordings from people you follow yet.":"No recordings yet.";
             }catch{
                 if(turn!==generation)return;
                 status.textContent="Music list unavailable.";more.textContent="Try again";more.hidden=false;

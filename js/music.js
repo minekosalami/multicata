@@ -129,9 +129,10 @@ async function publishTrack(event) {
     const form = event.currentTarget;
     const fields = form.elements;
     const status = form.querySelector("[role=status]");
+    const transfer = form.querySelector(".song-transfer");
     if (fields.publish.disabled) return;
     fields.publish.disabled = true;
-    status.replaceChildren();
+    status.textContent="Checking recording…";
     try {
         const title = fields.title.value.trim();
         const file = fields.recording.files[0];
@@ -143,11 +144,30 @@ async function publishTrack(event) {
         const {data:{user}} = await supabaseClient.auth.getUser();
         if (!user) throw new Error("Sign in to publish music.");
         const path = user.id + "/" + crypto.randomUUID() + "." + recording.extension;
-        status.textContent = "Uploading recording…";
         const bucket = supabaseClient.storage.from("creator-music");
+        if(fields.art.files[0])status.textContent="Uploading cover art…";
         const art = fields.art.files[0] ? await uploadCommunityImage(user.id,fields.art.files[0]) : null;
-        const uploaded = await bucket.upload(path, recording.body, {contentType:recording.mime});
-        if (uploaded.error) {if(art)await supabaseClient.storage.from("community-images").remove([art]);throw new Error("Upload failed. Please try again.");}
+        const uploadUrl=SUPABASE_URL+"/storage/v1/object/creator-music/"+path;
+        const meter=transfer.querySelector("progress"),caption=transfer.querySelector("span");
+        const small=file.size<1048576;
+        const size=file.size/(small?1024:1048576);
+        function showTransfer(fraction){
+            const percent=Math.floor(fraction*100);
+            meter.value=percent;
+            caption.textContent=percent+"% · "+(size*fraction).toFixed(1)+" of "+size.toFixed(1)+(small?" KB":" MB");
+        }
+        status.textContent="Uploading recording…";
+        showTransfer(0);transfer.hidden=false;
+        songUploadProgress.set(uploadUrl,showTransfer);
+        try{
+            const uploaded=await bucket.upload(path,recording.body,{contentType:recording.mime});
+            if(uploaded.error)throw uploaded.error;
+            showTransfer(1);
+        }catch{
+            if(art)await supabaseClient.storage.from("community-images").remove([art]);
+            throw new Error("Upload failed. Please try again.");
+        }finally{songUploadProgress.delete(uploadUrl);}
+        status.textContent="Publishing track…";
         const published = await supabaseClient.from("tracks").insert({user_id:user.id,title,duration_seconds:recording.seconds,
             release_name:fields.releaseName.value.trim() || null,credits:fields.credits.value.trim() || null,...(art?{art_path:art}:{}),audio_path:path}).select("id").single();
         if (published.error) {
@@ -164,5 +184,5 @@ async function publishTrack(event) {
         link.textContent = "View track on profile";
         status.append(link);
     } catch (error) { status.textContent = error.message; }
-    finally { fields.publish.disabled = false; }
+    finally { transfer.hidden=true;fields.publish.disabled = false; }
 }

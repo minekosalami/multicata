@@ -4,6 +4,19 @@
     const url=id=>"article.html?id="+encodeURIComponent(id);
     const date=value=>new Date(value).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
     const query=async request=>{const {data,error}=await request;if(error)throw error;return data;};
+    function deviceBookmarks(account){
+        const prefix="mc-bookmark:"+account+":";
+        return Object.keys(localStorage).filter(key=>key.startsWith(prefix)).map(key=>key.slice(prefix.length))
+            .filter(id=>/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id));
+    }
+    async function importBookmarks(account){
+        const ids=deviceBookmarks(account);
+        for(let start=0;start<ids.length;start+=100){
+            const batch=ids.slice(start,start+100);
+            await MC.rpc("import_article_bookmarks",{items:batch});
+            for(const id of batch)localStorage.removeItem("mc-bookmark:"+account+":"+id);
+        }
+    }
     async function byline(id){
         const person=await query(table("profiles").select("username,id").eq("user_id",id).order("username",{nullsFirst:false}).order("id").limit(1).maybeSingle());
         return link(person?.username?"@"+person.username:"Member profile",profile(id));
@@ -79,12 +92,30 @@
             root.append(filters);
             const saved=node("details"),items=node("div");saved.append(node("summary","Saved for later"),items);root.append(saved);
             const account=(await viewer())?.id||"guest";
-            saved.ontoggle=async()=>{if(!saved.open)return;items.replaceChildren();
-                const ids=Object.keys(localStorage).filter(k=>k.startsWith("mc-bookmark:"+account+":")).map(k=>k.split(":").pop());
-                if(!ids.length){items.textContent="No saved articles on this device.";return;}
-                try{const rows=await query(table("articles").select("id,title").eq("published",true).in("id",ids));
-                    for(const r of rows)items.append(link(r.title,url(r.id)));if(!rows.length)items.textContent="No available saved articles.";
-                }catch{items.textContent="Could not load saved articles.";}
+            let listRequest=0;
+            saved.ontoggle=async()=>{
+                const request=++listRequest;
+                if(!saved.open)return;
+                items.textContent="Loading saved articles…";
+                try{
+                    const entries=node("ul");
+                    if(account==="guest"){
+                        const ids=deviceBookmarks(account);
+                        for(let start=0;start<ids.length;start+=50){
+                            const rows=await query(table("articles").select("id,title").eq("published",true).in("id",ids.slice(start,start+50)));
+                            for(const row of rows)add(row);
+                        }
+                    }else{
+                        await importBookmarks(account);
+                        for(let start=0;;start+=50){
+                            const rows=await MC.rpc("saved_articles",{start_at:start});
+                            for(const row of rows)add(row);
+                            if(rows.length<50 || request!==listRequest)break;
+                        }
+                    }
+                    function add(row){const li=node("li");li.append(link(row.title,url(row.id)));entries.append(li);}
+                    if(request===listRequest)items.replaceChildren(entries.children.length?entries:account==="guest"?"No saved articles on this device.":"No saved articles yet.");
+                }catch{if(request===listRequest)items.textContent="Could not load saved articles. Reopen to try again.";}
             };
             if(moderator){
                 const reports=node("details"),entries=node("div");reports.append(node("summary","Article and reply reports"),entries);root.append(reports);
@@ -186,9 +217,35 @@
         const prose=root.querySelector(".article-prose"),controls=node("div",null,"article-views"),account=user?.id||"guest";
         meta.append(" · "+Math.max(1,Math.ceil(row.body.trim().split(/\s+/).length/200))+" min read");
         const key="mc-bookmark:"+account+":"+id;
-        const bookmark=button("",()=>{if(localStorage.getItem(key))localStorage.removeItem(key);else localStorage.setItem(key,"1");showBookmark();});
-        function showBookmark(){bookmark.textContent=localStorage.getItem(key)?"Remove bookmark":"Save for later";}
-        showBookmark();controls.append(bookmark);
+        let marked=false,loaded=false;
+        const bookmarkStatus=feedback(),bookmark=button("Save for later",async()=>{
+            if(!loaded){await loadBookmark();return;}
+            bookmark.disabled=true;bookmarkStatus.textContent="";
+            try{
+                if(user)await MC.rpc("set_article_bookmark",{target:id,desired:!marked});
+                else if(marked)localStorage.removeItem(key);
+                else localStorage.setItem(key,"1");
+                marked=!marked;showBookmark();
+            }catch{bookmarkStatus.textContent="Could not update your bookmark. Try again.";}
+            finally{bookmark.disabled=false;}
+        });
+        function showBookmark(){
+            bookmark.textContent=marked?"Remove bookmark":"Save for later";
+            bookmark.setAttribute("aria-pressed",marked);
+        }
+        async function loadBookmark(){
+            bookmark.disabled=true;bookmarkStatus.textContent="";
+            try{
+                if(user){
+                    await importBookmarks(account);
+                    const entry=await query(table("article_bookmarks").select("saved").eq("member",account).eq("article",id).maybeSingle());
+                    marked=Boolean(entry?.saved);
+                }else marked=Boolean(localStorage.getItem(key));
+                loaded=true;showBookmark();
+            }catch{bookmark.textContent="Retry bookmark";bookmarkStatus.textContent="Could not load your bookmark.";}
+            finally{bookmark.disabled=false;}
+        }
+        controls.append(bookmark,bookmarkStatus);loadBookmark();
         const size=node("select");size.setAttribute("aria-label","Reading text size");
         for(const [k,v] of [["1","Standard text"],["1.2","Large text"],["1.45","Extra large text"]])size.add(new Option(v,k));
         size.value=localStorage.getItem("mc-reading-size")||"1";prose.style.fontSize=size.value+"em";

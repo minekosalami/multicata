@@ -10,7 +10,23 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  const snap=(p,name)=>p.screenshot({path:path.join(__dirname,name+'.jpg'),quality:88});
  try {
  const creator=await openVisitor(browser,db,errors,ids[1],360);
+ await creator.route('**/js/backend.js',async route=>{
+    const response=await route.fetch();
+    await route.fulfill({response,body:await response.text()+`
+      const profileFrom=supabaseClient.from;
+      let interruptProfile=true;
+      supabaseClient.from=table=>{
+        const request=profileFrom(table);
+        if(table==='profiles' && interruptProfile){
+          interruptProfile=false;
+          request.maybeSingle=async()=>({error:{message:'Temporary fixture outage'}});
+        }
+        return request;
+      };`});
+ });
  await creator.goto(base+'account.html');
+ await creator.getByText(/Select Change username or Edit Profile to try again/).waitFor();
+ await creator.unroute('**/js/backend.js');
  const rename=creator.getByRole('button',{name:'Change username',exact:true});
  const handle=creator.getByLabel('Username',{exact:true});
  await rename.click();
@@ -20,14 +36,33 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await rename.click();assert.equal(await handle.inputValue(),'creator');
  await handle.fill('tester');await creator.locator('#saveProfileButton').click();
  await creator.getByText('That username is already taken.',{exact:true}).waitFor();
- await handle.fill('StudioCat');await creator.locator('#saveProfileButton').click();
- await creator.getByText('@StudioCat',{exact:true}).waitFor();
+ const renames=['StudioCat','PracticeRoom','StudioCat'];
+ for(const [index,name] of renames.entries()){
+    if(index>0)await rename.click();
+    await handle.fill(name);await handle.press('Enter');
+    await creator.getByText('@'+name,{exact:true}).waitFor();
+ }
  await creator.reload();await creator.getByText('@StudioCat',{exact:true}).waitFor();
  await creator.locator('#viewProfileButton').click();
  await creator.getByRole('heading',{name:'@StudioCat',exact:true}).waitFor();
  assert.equal((await db.query('select p.username from posts s join profiles p on p.user_id=s.user_id where s.id=$1',[ids[0]])).rows[0].username,'StudioCat');
  assert.equal((await asUser(db,ids[0],tx=>tx.query("update profiles set username='WrongOwner' where user_id=$1 returning id",[ids[1]]))).rows.length,0);
  await creator.close();checks.push('A member cancelled a rename, retried a taken name, and opened their renamed public profile after reload. Existing post ownership and cross-account permissions passed.');
+ // A legacy account can choose its first handle even when the database requires
+ // a username on insert. A second tab should edit the same profile afterwards.
+ await db.query('delete from profiles where user_id=$1',[ids[2]]);
+ await db.exec('alter table profiles alter column username set not null');
+ const older=await openVisitor(browser,db,errors,ids[2],390);
+ const otherTab=await older.context().newPage();
+ await Promise.all([older.goto(base+'account.html'),otherTab.goto(base+'account.html')]);
+ for(const tab of [older,otherTab])await tab.getByText(/^Choose a username so people/).waitFor();
+ await older.locator('#username').fill('FirstHandle');await older.locator('#username').press('Enter');
+ await older.getByText('@FirstHandle',{exact:true}).waitFor();
+ await otherTab.locator('#username').fill('NextHandle');await otherTab.locator('#saveProfileButton').click();
+ await otherTab.getByText(/created in another tab/).waitFor();
+ await otherTab.locator('#saveProfileButton').click();await otherTab.getByText('@NextHandle',{exact:true}).waitFor();
+ assert.deepEqual((await db.query('select username from profiles where user_id=$1',[ids[2]])).rows,[{username:'NextHandle'}]);
+ await older.context().close();
  const p=await openVisitor(browser,db,errors,ids[0],360);
  await p.route('**/storage/v1/object/public/community-images/**',r=>r.fulfill({contentType:'image/jpeg',path:path.resolve('images/nart.jpeg')}));
  await p.goto(base+'account.html');await p.locator('#editProfile').click();
@@ -36,6 +71,12 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await p.locator('#background_path').setInputFiles({name:'invalid.png',mimeType:'image/png',buffer:Buffer.from('not an image')});
  await p.locator('#profileMessage').filter({hasText:'valid JPEG'}).waitFor();
  await p.locator('#bio').fill('Local profile preview');await p.locator('#text_color').fill('#432951');
+ await p.locator('#displayName').fill('Rehearsal Cat');
+ await p.locator('#social_links').fill('https://example.org/music');
+ // Fixture the existing avatar bucket's owner-write policy for this upload.
+ await db.exec("create policy fixture_avatar_insert on storage.objects for insert to authenticated with check(bucket_id='avatars' and split_part(name,'/',1)=auth.uid()::text)");
+ await p.route('**/storage/v1/object/public/avatars/**',r=>r.fulfill({contentType:'image/jpeg',path:path.resolve('images/nart.jpeg')}));
+ await p.locator('#profilePictureFile').setInputFiles('images/nart.jpeg');
  await p.locator('#border_color').fill('#865383');await p.locator('#background_color').fill('#b8d6bc');await p.locator('#accent_color').fill('#526e92');
  for(const key of ['background_path','banner_path'])await p.locator('#'+key).setInputFiles('images/nart.jpeg');
  await p.waitForFunction(()=>document.querySelector('#appearancePreview').style.backgroundImage.includes('blob:') && document.querySelector('#appearancePreview .profile-banner').naturalWidth>0);
@@ -43,6 +84,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  assert.equal(await p.locator('.identity-preview').evaluate(el=>getComputedStyle(el).color),'rgb(67, 41, 81)');
  await p.locator('#saveProfileButton').click();await p.getByText('Profile saved!',{exact:true}).waitFor();
  await p.locator('#viewProfileButton').click();await p.locator('.profile-page .bio').filter({hasText:'Local profile preview'}).waitFor();
+ await p.getByText('Rehearsal Cat',{exact:true}).waitFor();
+ assert.equal(await p.getByRole('link',{name:'example.org',exact:true}).getAttribute('href'),'https://example.org/music');
+ await p.waitForFunction(()=>document.querySelector('.profile-picture-container img')?.naturalWidth>0);
  const theme=await p.locator('.profile-card').evaluate(el=>({text:getComputedStyle(el.querySelector('.bio')).color,border:getComputedStyle(el).borderTopColor,background:document.body.style.backgroundImage,overflow:document.documentElement.scrollWidth-innerWidth}));
  assert.equal(theme.text,'rgb(67, 41, 81)');assert.equal(theme.border,'rgb(134, 83, 131)');assert(theme.background.includes(ids[0]));assert.equal(theme.overflow,0);
  await snap(p,'profile-saved');checks.push({savedTheme:theme});

@@ -198,7 +198,7 @@
         <h2>Your profile</h2>
         <div class="account-username-row">
             <strong id="accountUsername"></strong>
-            <button type="button" id="changeUsername" disabled onclick="showProfileSetup(); document.getElementById('username').focus()">Change username</button>
+            <button type="button" id="changeUsername" onclick="openProfileEditor('username')">Change username</button>
         </div>
 
         <p id="userEmail"></p>
@@ -206,7 +206,7 @@
         <p id="memberSince" class="member-since"></p>
         <p id="accountMessage" class="message" role="status" aria-live="polite"></p>
 
-        <button id="editProfile" disabled onclick="showProfileSetup()">
+        <button id="editProfile" onclick="openProfileEditor('profile')">
             Edit Profile
         </button>
 
@@ -233,6 +233,10 @@
                     <small id="art-limit">JPEG or static PNG, up to 5 MB</small>
                 </fieldset>
                 <button type="submit" name="publish">Publish track</button>
+                <div class="song-transfer" hidden>
+                    <progress max="100" value="0" aria-label="Song upload progress"></progress>
+                    <span></span>
+                </div>
                 <p role="status"></p>
             </form>
         </details>
@@ -246,9 +250,9 @@
 
     <!-- PROFILE EDITOR -->
 
-    <div id="profileArea">
+    <form id="profileArea" onsubmit="event.preventDefault(); saveProfile()" novalidate>
 
-        <h2>Edit Your Profile</h2>
+        <h2 id="editorHeading">Edit Your Profile</h2>
 
 
         <img
@@ -273,6 +277,7 @@
         >
         <small id="usernameHelp">Use 1–20 letters, numbers, or underscores. Your public profile link uses this name.</small>
 
+        <div id="profileDetails">
         <label for="displayName">Display name (optional)</label>
         <input
             type="text"
@@ -326,19 +331,20 @@
             </div>
             <label>Social links (one per line, up to five)<textarea id="social_links"></textarea></label>
         </fieldset>
-        <button id="saveProfileButton" onclick="saveProfile()">
+        </div>
+        <button id="saveProfileButton" type="submit">
             Save Profile
         </button>
 
 
-        <button onclick="cancelProfileEdit()">
+        <button type="button" id="cancelProfile" onclick="cancelProfileEdit()">
             Cancel
         </button>
 
 
         <p id="profileMessage" class="message" role="status" aria-live="polite"></p>
 
-    </div>
+    </form>
 
 </main>
 
@@ -354,6 +360,8 @@
     let selectedProfilePictureFile = null;
     let activeAccount = null;
     let authRevision = 0;
+    let profileLoad = null;
+    let editorMode = "profile";
     let currentProfilePictureUrl = null;
 
 
@@ -529,6 +537,7 @@
     }
 
     function showSignedOut() {
+        profileLoad = null;
         activeAccount = savedAppearance = currentProfilePictureUrl = selectedProfilePictureFile = null;
         forgetPreviewFiles();
         document.getElementById("userEmail").textContent = "";
@@ -567,9 +576,13 @@
 
         if (!user || activeAccount === user.id) return;
         activeAccount = user.id;
+        profileLoad = null;
         document.getElementById("logOutButton").disabled = false;
-        document.getElementById("editProfile").disabled = true;
-        document.getElementById("changeUsername").disabled = true;
+        document.getElementById("accountUsername").textContent = "";
+        document.getElementById("memberSince").textContent = "";
+        document.getElementById("viewProfileButton").style.display = "none";
+        document.getElementById("viewProfileButton").removeAttribute("href");
+        currentProfilePictureUrl = selectedProfilePictureFile = null;
         savedAppearance = null;
 
 
@@ -591,7 +604,12 @@
             user.email;
 
 
-        if (await ensureProfile(user) && activeAccount === user.id) resumeAccountDestination();
+        const profile = await loadAccountProfile(user.id);
+        if (!profile || activeAccount !== user.id || document.getElementById("profileArea").style.display === "block") return;
+        if (!profile.username?.trim()) {
+            showProfileSetup("username");
+            document.getElementById("profileMessage").textContent = "Choose a username so people can recognize your posts, music, and replies.";
+        } else resumeAccountDestination();
     }
 
     function resumeAccountDestination() {
@@ -618,166 +636,62 @@
     // LOAD PROFILE
     // ==========================================
 
-    async function ensureProfile(user, registrationRetried = false) {
-
-        const {
-            data: profile,
-            error: fetchError
-        } = await supabaseClient
-            .from("profiles")
-            .select(
-                "*"
-            )
-            .eq("user_id", user.id)
-            .order("username", {nullsFirst:false}).order("id").limit(1)
-            .maybeSingle();
-
-        if (activeAccount !== user.id) return false;
-
-        if (fetchError) {
-
-            console.error(
-                "Error checking profile:",
-                fetchError
-            );
-            document.getElementById("accountMessage").textContent =
-                "Your account loaded, but your profile details could not be retrieved.";
-
-            return;
-
-        }
-
-
-        if (profile) {
-            document.getElementById("accountUsername").textContent = profile.username ? "@" + profile.username : "";
-            loadProfileOptions(profile);
-            document.getElementById("editProfile").disabled = false;
-            document.getElementById("changeUsername").disabled = false;
-
-            document.getElementById("username").value =
-                profile.username || "";
-
-
-            document.getElementById("displayName").value =
-                profile.display_name || "";
-
-
-            document.getElementById("bio").value =
-                profile.bio || "";
-
-
-            currentProfilePictureUrl =
-                profile.profile_picture || null;
-
-
-            // ======================================
-            // MEMBER SINCE
-            // ======================================
-
-            if (profile.created_at) {
-
-                const date =
-                    new Date(profile.created_at);
-
-
-                document.getElementById("memberSince").textContent =
-                    "Member since " +
-                    date.toLocaleDateString(
-                        undefined,
-                        {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric"
-                        }
-                    );
-
+    function loadAccountProfile(owner) {
+        if (profileLoad) return profileLoad;
+        const message = document.getElementById("accountMessage");
+        message.textContent = "Loading your profile…";
+        const pending = Promise.resolve().then(async () => {
+            try {
+                const {data, error} = await supabaseClient.from("profiles").select("*")
+                    .eq("user_id", owner).order("username", {nullsFirst:false}).order("id").limit(1).maybeSingle();
+                if (activeAccount !== owner || profileLoad !== pending) return null;
+                if (error) throw error;
+                // Accounts created before usernames became required may have no profile yet.
+                const profile = data || {user_id:owner};
+                displayAccountProfile(profile);
+                message.textContent = "";
+                return profile;
+            } catch {
+                if (activeAccount === owner && profileLoad === pending) message.textContent = "Could not load your profile. Select Change username or Edit Profile to try again.";
+                return null;
+            } finally {
+                if (profileLoad === pending) profileLoad = null;
             }
-
-
-            // ======================================
-            // PROFILE BUTTON
-            // ======================================
-
-            if (profile.username) {
-
-                document.getElementById("viewProfileButton").href =
-                    "profile.html?user=" +
-                    encodeURIComponent(profile.username);
-
-                document.getElementById("viewProfileButton").style.display =
-                    "inline-block";
-
-            } else {
-
-                document.getElementById("viewProfileButton").style.display =
-                    "none";
-
-            }
-
-
-            // ======================================
-            // PROFILE PICTURE PREVIEW
-            // ======================================
-
-            updateProfilePicturePreview(
-                profile.profile_picture
-            );
-
-            if (!profile.username?.trim()) {
-                showProfileSetup();
-                document.getElementById("profileMessage").textContent = "Choose a username so people can recognize your posts, music, and replies.";
-                document.getElementById("username").focus();
-                return false;
-            }
-            return true;
-
-        }
-
-
-        // ==========================================
-        // CREATE BLANK PROFILE
-        // ==========================================
-
-        if (registrationRetried) {
-            document.getElementById("accountMessage").textContent =
-                "Your profile could not be loaded. Please refresh and try again.";
-            return false;
-        }
-        const { error: insertError } =
-            await supabaseClient
-                .from("profiles")
-                .insert({user_id: user.id});
-        if (!insertError || insertError.code === "23505") {
-            // Another tab may have finished this account's registration first.
-            return ensureProfile(user, true);
-        }
-
-
-        if (insertError) {
-
-            console.error(
-                "Error creating profile:",
-                insertError
-            );
-            document.getElementById("accountMessage").textContent =
-                "Your account is ready, but profile setup could not be started. Please refresh and try again.";
-
-        }
-
+        });
+        profileLoad = pending;
+        return pending;
     }
 
+    function displayAccountProfile(profile) {
+        savedAppearance = profile;
+        currentProfilePictureUrl = profile.profile_picture || null;
+        document.getElementById("accountUsername").textContent = profile.username ? "@" + profile.username : "";
+        document.getElementById("memberSince").textContent = profile.created_at
+            ? "Member since " + new Date(profile.created_at).toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"}) : "";
+        const link = document.getElementById("viewProfileButton");
+        if (profile.username) link.href = "profile.html?user=" + encodeURIComponent(profile.username);
+        else link.removeAttribute("href");
+        link.style.display = profile.username ? "inline-block" : "none";
+    }
 
-    // ==========================================
-    // SHOW PROFILE EDITOR
-    // ==========================================
+    async function openProfileEditor(mode) {
+        const owner = activeAccount;
+        if (!owner) return;
+        const profile = savedAppearance || await loadAccountProfile(owner);
+        if (profile && activeAccount === owner) showProfileSetup(mode);
+    }
 
-    function showProfileSetup() {
-        if (savedAppearance) {
-            document.getElementById("username").value = savedAppearance.username || "";
-            document.getElementById("displayName").value = savedAppearance.display_name || "";
-            document.getElementById("bio").value = savedAppearance.bio || "";
-            loadProfileOptions(savedAppearance);
-        }
+    function showProfileSetup(mode) {
+        if (!savedAppearance) return;
+        editorMode = mode;
+        const rename = mode === "username";
+        document.getElementById("editorHeading").textContent = rename ? "Change username" : "Edit Your Profile";
+        document.getElementById("saveProfileButton").textContent = rename ? "Save username" : "Save Profile";
+        document.getElementById("profileDetails").hidden = rename;
+        document.getElementById("username").value = savedAppearance.username || "";
+        document.getElementById("displayName").value = savedAppearance.display_name || "";
+        document.getElementById("bio").value = savedAppearance.bio || "";
+        if (!rename) loadProfileOptions(savedAppearance);
 
         selectedProfilePictureFile = null;
 
@@ -795,9 +709,8 @@
         document.getElementById("profileMessage").textContent =
             "";
 
-        updateProfilePicturePreview(
-            currentProfilePictureUrl
-        );
+        updateProfilePicturePreview(rename ? null : currentProfilePictureUrl);
+        document.getElementById("username").focus();
 
     }
 
@@ -830,7 +743,10 @@
 
     async function saveProfile() {
         const button = document.getElementById("saveProfileButton");
+        if (button.disabled || !savedAppearance) return;
         button.disabled = true;
+        const cancel = document.getElementById("cancelProfile");
+        cancel.disabled = true;
 
         const staged = [];
         try {
@@ -839,12 +755,15 @@
             console.error("Profile save failed:", error);
             document.getElementById("profileMessage").textContent = error.message || "Could not save profile.";
         } finally {
-            if (staged.length) await supabaseClient.storage.from("community-images").remove(staged);
-            button.disabled = false;
+            try {
+                if (staged.length) await supabaseClient.storage.from("community-images").remove(staged);
+            } finally { button.disabled = false; cancel.disabled = false; }
         }
     }
 
     async function saveProfileChanges(staged) {
+        const original = savedAppearance;
+        const rename = editorMode === "username";
 
         const username =
             document.getElementById("username").value.trim();
@@ -863,7 +782,7 @@
         } = await supabaseClient.auth.getUser();
 
 
-        if (!user) {
+        if (!user || user.id !== original.user_id || user.id !== activeAccount) {
 
             document.getElementById("profileMessage").textContent =
                 "You aren't logged in.";
@@ -891,7 +810,7 @@
         // USERNAME FORMAT
         // ==========================================
 
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        if (!/^[a-zA-Z0-9_]{1,20}$/.test(username)) {
 
             document.getElementById("profileMessage").textContent =
                 "Username can only contain letters, numbers, and underscores.";
@@ -901,7 +820,7 @@
         }
 
 
-        const options = await readProfileOptions(user.id, staged);
+        const options = rename ? {} : await readProfileOptions(user.id, staged);
         let newProfilePictureUrl = currentProfilePictureUrl;
         let uploadedProfilePicturePath = null;
 
@@ -909,7 +828,7 @@
         // UPLOAD PROFILE PICTURE IF ONE WAS SELECTED
         // ==========================================
 
-        if (selectedProfilePictureFile) {
+        if (!rename && selectedProfilePictureFile) {
 
             const file = selectedProfilePictureFile;
 
@@ -981,25 +900,15 @@
 
         // A lost response can follow a committed update. Only discard these uploads on a confirmed rejection.
         const uploadedOptions = staged.splice(0);
-        const { error } =
-            await supabaseClient
-                .from("profiles")
-                .update({
-
-                    ...options,
-                    username: username,
-
-                    display_name:
-                        displayName || null,
-
-                    bio:
-                        bio || null,
-
-                    profile_picture:
-                        newProfilePictureUrl || null
-
-                })
-                .eq("user_id", user.id).eq("id", savedAppearance.id).select("id").single();
+        const changes = rename ? {username} : {
+            ...options, username, display_name:displayName || null,
+            bio:bio || null, profile_picture:newProfilePictureUrl || null
+        };
+        const profiles = supabaseClient.from("profiles");
+        const request = original.id
+            ? profiles.update(changes).eq("user_id", user.id).eq("id", original.id)
+            : profiles.insert({user_id:user.id,...changes});
+        const { data:updated, error } = await request.select("*").single();
 
 
         if (error) {
@@ -1017,13 +926,21 @@
             }
 
             if (
-                error.message
+                error.code === "23505" || error.message
                     .toLowerCase()
                     .includes("duplicate") ||
                 error.message
                     .toLowerCase()
                     .includes("unique")
             ) {
+                if (!original.id) {
+                    // Another tab may have created this member's profile first.
+                    const existing = await loadAccountProfile(user.id);
+                    if (existing?.id) {
+                        document.getElementById("profileMessage").textContent = "Your profile was created in another tab. Save again to use this username.";
+                        return;
+                    }
+                }
 
                 document.getElementById("profileMessage").textContent =
                     "That username is already taken.";
@@ -1044,19 +961,19 @@
 
 
         const replaced = ["banner_path", "background_path"].filter(key =>
-            key in options && savedAppearance[key] && savedAppearance[key] !== options[key]
-        ).map(key => savedAppearance[key]);
+            key in options && original[key] && original[key] !== options[key]
+        ).map(key => original[key]);
         if (replaced.length) await supabaseClient.storage.from("community-images").remove(replaced);
 
         // Delete the old avatar after the new one is safely saved.
         if (
             uploadedProfilePicturePath &&
-            currentProfilePictureUrl
+            original.profile_picture
         ) {
 
             const oldPath =
                 getAvatarStoragePath(
-                    currentProfilePictureUrl
+                    original.profile_picture
                 );
 
             if (oldPath) {
@@ -1071,37 +988,12 @@
         }
 
 
-        currentProfilePictureUrl =
-            newProfilePictureUrl;
-
-        selectedProfilePictureFile = null;
-
-        document.getElementById("profilePictureFile").value =
-            "";
-
-        document.getElementById("profileMessage").textContent =
-            "Profile saved!";
-
-
-        // Reload profile information
-
-        await ensureProfile(user);
-
-
-        // Return to account view after a short delay
-
-        setTimeout(function() {
-            if (activeAccount !== user.id) return;
-
-            document.getElementById("profileArea").style.display =
-                "none";
-
-
-            document.getElementById("accountArea").style.display =
-                "block";
-            resumeAccountDestination();
-
-        }, 700);
+        if (activeAccount !== user.id) return;
+        displayAccountProfile(updated);
+        cancelProfileEdit();
+        document.getElementById("accountMessage").textContent = rename ? "Username saved." : "Profile saved!";
+        document.getElementById(rename ? "changeUsername" : "editProfile").focus();
+        resumeAccountDestination();
 
     }
 
