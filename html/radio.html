@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mCata Radio · Multi-Cata</title>
+<link rel="stylesheet" href="../css/site.css"><link rel="stylesheet" href="../css/renaissance.css"><link rel="stylesheet" href="../css/radio.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/backend.js"></script>
+<script src="../js/site.js" defer></script><script src="../js/player.js" defer></script>
+<script src="../js/social.js"></script>
+<script type="module" src="../js/radio-view.js"></script></head>
+<body class="radio-page"><header class="site-header"><a class="site-brand" href="index.html">Multi-Cata</a>
+<nav class="site-nav" aria-label="Main navigation"><a href="index.html">Home</a><a href="articles.html">Articles</a><a href="posts.html">Posts</a><a href="chat.html">Chat</a><a href="account.html">Account</a></nav></header>
+<main class="radio-layout" data-radio><section class="receiver"><h1>mCata Radio</h1>
+<div data-radio-face></div></section>
+<p role="status" data-feedback></p>
+<section class="radio-card lavender"><h2>Now Playing</h2><div data-now></div></section>
+<div class="radio-columns"><section class="radio-card blue"><h2>Recently Played</h2><ul data-history></ul></section>
+<section class="radio-card yellow"><h2>Upcoming Broadcasts</h2><ul data-scheduled></ul></section></div>
+<section class="radio-card green"><h2>Vote for the Next Song</h2><p data-vote-time></p><div data-votes></div></section>
+<a href="radio-control.html" data-control hidden>Radio Control Panel</a></main></body></html>

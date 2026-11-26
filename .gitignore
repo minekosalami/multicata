@@ -38,3 +38,7 @@ _qa/**
 !_qa/nine/round4/home.jpg
 !_qa/nine/soak.json
 !_qa/nine/native-zoom.log
+
+!_qa/radio/*.cjs
+!_qa/radio/report.md
+!_qa/radio/*.png

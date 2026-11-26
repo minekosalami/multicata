@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "test:radio": "node _qa/radio/station.cjs && node _qa/radio/verify.cjs && node _qa/radio/browser.cjs",
     "test": "npm run test:database && npm run test:community && npm run test:homepage",
     "test:stress": "node _qa/nine/stress.cjs && node _qa/nine/engines.cjs && node _qa/nine/soak.cjs",
     "test:database": "node _qa/evolution/tests/policies.cjs && node _qa/next/social-policies.cjs && node _qa/renaissance/editorial-policies.cjs",

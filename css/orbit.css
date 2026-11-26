@@ -71,6 +71,9 @@ body.orbit-home {
     gap: var(--opening-gap);
 }
 .orbit-home .flight-deck { gap: var(--opening-gap); }
+@media(min-width:741px){
+ .orbit-home .flight-deck,.orbit-home .radio-widget {min-block-size:clamp(18rem,29vw,24rem)}
+}
 .portal-grid .directory { grid-column: 1 / -1; margin: 0; }
 .orbit-home .station > header .posts-button {
     padding: .35rem .85rem;

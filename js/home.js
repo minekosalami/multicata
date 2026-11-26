@@ -28,7 +28,11 @@
         document.querySelector(".flight-index").append(settings);
         function arrange(){
             const pinned=widgets.filter(w=>localStorage.getItem(scope+w.id+":pin"));
-            grid.append(...pinned,...widgets.filter(w=>!pinned.includes(w)));
+            const ordered=[...pinned,...widgets.filter(w=>!pinned.includes(w))];
+            const radio=grid.querySelector(".radio-widget");
+            const afterPair=ordered.findLastIndex(w=>w.id==="music" || w.id==="posts")+1;
+            ordered.splice(afterPair,0,radio);
+            grid.append(...ordered);
         }
         for(const w of widgets){
             const title=w.querySelector("h2").textContent;

@@ -16,4 +16,9 @@ if(t==='posts')data.forEach(p=>p.tracks=read('tracks').find(tr=>tr.id===p.track_
 if(bounds)data=data.slice(...bounds);
 done({data:single?(data[0]||null):data,error:null})}catch(e){fail(e)}}};return q;
 }
-window.supabase={createClient:()=>({auth:{getUser:async()=>({data:{user:localStorage.auth?user:null}}),onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}}},signUp:async({email})=>{localStorage.setItem('registered',email);return {data:{user},error:null}},signInWithPassword:async()=>{localStorage.auth='1';return {data:{user}}},signOut:async()=>{delete localStorage.auth;return {}}},from,storage:{from:bucket=>({upload:async(path,file)=>{if(!file.size)throw Error('empty');return {}},getPublicUrl:path=>({data:{publicUrl:bucket==='creator-music'?'/audio/GrassCatsPopM.mp3':'/images/nart.jpeg'}}),remove:async()=>({}),createSignedUrl:async()=>({data:{signedUrl:'/images/nart.jpeg'}})})}})};
+window.supabase={createClient:()=>({auth:{getUser:async()=>({data:{user:localStorage.auth?user:null}}),onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}}},signUp:async({email,options})=>{
+ const username=options.data.username;
+ if(read('profiles').some(p=>p.username===username))return {error:{message:'Database error saving new user'}};
+ localStorage.setItem('registered',email);write('profiles',[{...profile,username}]);
+ return {data:{user},error:null};
+},signInWithPassword:async()=>{localStorage.auth='1';return {data:{user}}},signOut:async()=>{delete localStorage.auth;return {}}},from,storage:{from:bucket=>({upload:async(path,file)=>{if(!file.size)throw Error('empty');return {}},getPublicUrl:path=>({data:{publicUrl:bucket==='creator-music'?'/audio/GrassCatsPopM.mp3':'/images/nart.jpeg'}}),remove:async()=>({}),createSignedUrl:async()=>({data:{signedUrl:'/images/nart.jpeg'}})})}})};

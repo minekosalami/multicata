@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../css/site.css">
     <script src="../js/site.js" defer></script>
     <script src="../js/player.js" defer></script>
+    <link rel="stylesheet" href="../css/radio.css">
+    <script type="module" src="../js/radio-view.js"></script>
 
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -66,9 +68,17 @@
         <div class="drift-lane" aria-hidden="true"></div>
         <div class="portal-grid">
             <section id="music" class="station music-station"><header><h2>Music</h2><a href="music.html">All Music <span aria-hidden="true">↗</span></a></header><div data-library="home"></div></section>
+            <section id="posts" class="station post-station"><header><h2>Posts</h2><a class="posts-button" href="posts.html">View all posts <span aria-hidden="true">↗</span></a></header><div id="recentPosts"></div></section>
+            <div class="radio-widget receiver" data-radio role="region" aria-labelledby="home-radio-title">
+                <div class="radio-widget-heading">
+                    <h2 id="home-radio-title">mCata Radio</h2>
+                    <a class="radio-more" href="radio.html" aria-label="More about mCata Radio">More</a>
+                </div>
+                <div data-radio-face></div>
+                <p role="status" data-feedback></p>
+            </div>
             <section id="reading" class="station reading-station"><header><h2>Articles</h2><a href="articles.html">All Articles <span aria-hidden="true">↗</span></a></header><div data-article-list data-preview></div></section>
             <section id="chats" class="station chat-station"><header><h2>Messages</h2></header><div id="home-inbox"></div><footer><a href="inbox.html">Private messages</a><a href="chat.html">Community chat</a></footer></section>
-            <section id="posts" class="station post-station"><header><h2>Posts</h2><a class="posts-button" href="posts.html">View all posts <span aria-hidden="true">↗</span></a></header><div id="recentPosts"></div></section>
             <section id="directory" class="directory creator-register">
                 <h2>Creators &amp; characters</h2>
                 <section class="creator-list"><h3>Community creators</h3><div id="home-creators"></div></section>

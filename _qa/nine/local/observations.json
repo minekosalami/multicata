@@ -1,0 +1,241 @@
+{
+  "round": "local",
+  "browser": "158.0.8127.38",
+  "node": "v24.18.0",
+  "os": "10.0.26300",
+  "checks": [
+    {
+      "name": "Public article survives vote service outage",
+      "pass": true,
+      "observed": "QA listening notes\n\n@tester · Nov 25, 2026 · 1 min read\n\nSave for later\nStandard text\nLarge text\nExtra large text\n\nLocal listening notes. Local listening notes. Local listening not"
+    },
+    {
+      "name": "Successful save retires stale recovery prompt",
+      "pass": true,
+      "observed": {
+        "stale": 0
+      }
+    },
+    {
+      "name": "Local link destinations exist",
+      "pass": true,
+      "observed": []
+    },
+    {
+      "name": "Sustained audio while navigating",
+      "pass": true,
+      "observed": {
+        "advance": 65.731182,
+        "same": true,
+        "events": [],
+        "paused": false
+      }
+    }
+  ],
+  "layout": [
+    {
+      "width": 320,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 320,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 320,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 320,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 320,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    },
+    {
+      "width": 360,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 360,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 360,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 360,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 360,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    },
+    {
+      "width": 768,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 768,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 768,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 768,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 768,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    },
+    {
+      "width": 1920,
+      "route": "index.html",
+      "overflow": 0
+    },
+    {
+      "width": 1920,
+      "route": "articles.html",
+      "overflow": 0
+    },
+    {
+      "width": 1920,
+      "route": "music.html",
+      "overflow": 0
+    },
+    {
+      "width": 1920,
+      "route": "characters.html",
+      "overflow": 0
+    },
+    {
+      "width": 1920,
+      "route": "profile.html?id=00000000-0000-4000-8000-000000000002",
+      "overflow": 0
+    }
+  ],
+  "errors": [],
+  "brokenLinks": [],
+  "zoomOverflow": 0,
+  "performance": {
+    "cycles": 32,
+    "medianNavigationMs": 1414,
+    "requests": 539,
+    "wallSeconds": 65.67005599999993,
+    "taskSeconds": 10.041514,
+    "heapMiB": [
+      15,
+      16
+    ],
+    "listeners": [
+      215,
+      158
+    ],
+    "playback": {
+      "advance": 65.731182,
+      "same": true,
+      "events": [],
+      "paused": false
+    }
+  },
+  "postCollection": {
+    "documents": 7,
+    "nodes": 1036,
+    "jsEventListeners": 158
+  }
+}

@@ -42,6 +42,11 @@ if (!nav) {
     try {document.documentElement.classList.toggle("motion-off",localStorage.getItem("multicata-motion")==="off");} catch {}
 }
 if (nav) {
+    const radioLink=document.createElement("a");
+    radioLink.href=new URL("../html/radio.html",document.currentScript.src).href;
+    radioLink.textContent="Radio";
+    if(location.pathname===new URL(radioLink.href).pathname)radioLink.setAttribute("aria-current","page");
+    nav.querySelector("a").after(radioLink);
     const brand = document.querySelector(".site-header .site-brand");
     if (brand) {
         const group = document.createElement("div");

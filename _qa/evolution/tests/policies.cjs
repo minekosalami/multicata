@@ -2,7 +2,7 @@ const {PGlite}=require('@electric-sql/pglite'), fs=require('fs'), assert=require
 (async()=>{
 const db=new PGlite();const run=s=>db.exec(s), rows=async s=>(await db.query(s)).rows;
 await run(`create schema auth;create schema storage;create role anon;create role authenticated;create role service_role bypassrls;
-create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+create table auth.users(id uuid primary key,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
 create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
 create table storage.objects(bucket_id text,name text);create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;
 create table public.profiles(id uuid primary key,user_id uuid, username text, profile_picture text);

@@ -13,6 +13,21 @@
     nav?.prepend(toggle);
 
     let frame, panel, audio, caption;
+    const scriptBase = document.currentScript.src;
+    let radio, radioReady;
+    function getRadio() {
+        if (!radioReady) radioReady = import(new URL("radio-host.js", scriptBase)).then(async module => {
+            radio = await module.station(scriptBase, () => {
+                setup();
+                audio.pause();
+                started = true;
+                show(false);
+                channel?.postMessage("playing");
+            });
+            return radio;
+        }).catch(error => { radioReady = null; throw error; });
+        return radioReady;
+    }
     let started = false;
     let speed = 1;
     function slowDial() {
@@ -82,7 +97,7 @@
     }
     let previous=[], upcoming=[], queueBox, queueLabel, queueItems, queueHint, prevButton, nextButton, playNext;
     const channel=(!host && "BroadcastChannel" in window) ? new BroadcastChannel("multicata-audio") : null;
-    if(channel) channel.onmessage=()=>{if(audio && !audio.paused)audio.pause();};
+    if(channel) channel.onmessage=()=>{if(audio && !audio.paused)audio.pause();radio?.power(false);};
     function validTrack(t) {
         if (!t || typeof t.title!=="string" || typeof t.src!=="string") return false;
         try {
@@ -191,7 +206,7 @@
         audio.preload = "none";
         audio.src = source.href;
         restore();
-        audio.addEventListener("play", () => { started = true; channel?.postMessage("playing"); updateIndicator(); drawQueue(); remember(); });
+        audio.addEventListener("play", () => { radio?.power(false); started = true; channel?.postMessage("playing"); updateIndicator(); drawQueue(); remember(); });
         audio.addEventListener("pause", () => { updateIndicator(); remember(); });
         audio.addEventListener("ended",nextSong);
         window.addEventListener("pagehide", remember);
@@ -249,7 +264,7 @@
         };
         document.body.prepend(frame);
         for (const element of document.body.children) {
-            if (element !== frame && element !== panel) element.hidden = true;
+            if (element !== frame && element !== panel && element !== radio?.bar) element.hidden = true;
         }
         window.dispatchEvent(new Event("playerhost"));
     }
@@ -268,6 +283,10 @@
         }
     });
     function openPlayer(play, track) {
+        if (!play && radio?.tuned) {
+            navigate(new URL("../html/radio.html",scriptBase).href);
+            return;
+        }
         setup();
         show(play || panel.hidden);
         if (!panel.hidden) {
@@ -286,7 +305,7 @@
         }
     }
     function openQueue(){setup();show(true);if(queueBox){queueBox.open=true;queueLabel.focus();}}
-    window.multiCataPlayer = host || {openPlayer,openQueue,navigate,closePanel,enqueue,playCollection};
+    window.multiCataPlayer = host || {openPlayer,openQueue,navigate,closePanel,enqueue,playCollection,getRadio};
     const queueShortcut=document.createElement("button");queueShortcut.className="mobile-queue";queueShortcut.textContent="Queue";
     queueShortcut.onclick=()=>window.multiCataPlayer.openQueue();toggle.after(queueShortcut);
     document.addEventListener("keydown", event => {

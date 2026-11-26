@@ -2,6 +2,14 @@ const assert=require('node:assert/strict');
 const {database,asUser,ids:[a,b,c]}=require('./local-db.cjs');
 (async()=>{
  const db=await database(true);
+ const signupId='00000000-0000-4000-8000-000000000025';
+ const register=(id,username)=>db.query('insert into auth.users(id,raw_user_meta_data) values ($1,$2)',[id,JSON.stringify({username})]);
+ await register(signupId,'NewListener');
+ assert.equal((await db.query('select username from profiles where user_id=$1',[signupId])).rows[0].username,'NewListener');
+ const rejectedId='00000000-0000-4000-8000-000000000026';
+ await assert.rejects(register(rejectedId,'NewListener'),{code:'23505'});
+ await assert.rejects(register(rejectedId,'bad name'),{code:'22023'});
+ assert.equal((await db.query('select id from auth.users where id=$1',[rejectedId])).rows.length,0);
  assert.deepEqual((await db.query("select username from profiles where user_id='00000000-0000-4000-8000-000000000004' order by username")).rows.map(p=>p.username),['old_name','other_name']);
  const rows=(user,sql,params=[])=>asUser(db,user,async tx=>(await tx.query(sql,params)).rows);
  const react=(u,r,v)=>rows(u,'select music_reaction($1,$2)',[r,v]);

@@ -78,6 +78,13 @@
             margin: 15px;
         }
 
+        .account-username-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
         .profile-link {
             display: inline-block;
             margin: 10px;
@@ -168,6 +175,8 @@
             required
         >
 
+        <label for="signupUsername">Username (for new accounts)</label>
+        <input id="signupUsername" type="text" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false">
         <button id="signUpButton" onclick="signUp()">
             Create Account
         </button>
@@ -187,6 +196,10 @@
     <div id="accountArea">
 
         <h2>Your profile</h2>
+        <div class="account-username-row">
+            <strong id="accountUsername"></strong>
+            <button type="button" id="changeUsername" disabled onclick="showProfileSetup(); document.getElementById('username').focus()">Change username</button>
+        </div>
 
         <p id="userEmail"></p>
 
@@ -253,8 +266,12 @@
             placeholder="Username"
             maxlength="20"
             autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            aria-describedby="usernameHelp"
             required
         >
+        <small id="usernameHelp">Use 1–20 letters, numbers, or underscores. Your public profile link uses this name.</small>
 
         <label for="displayName">Display name (optional)</label>
         <input
@@ -384,6 +401,14 @@
             return;
         }
 
+        const usernameInput = document.getElementById("signupUsername");
+        const username = usernameInput.value.trim();
+        if (!/^[a-zA-Z0-9_]{1,20}$/.test(username)) {
+            message.textContent = "Choose a username of 1–20 letters, numbers, or underscores.";
+            usernameInput.focus();
+            return;
+        }
+
         button.disabled = true;
         message.textContent = "Creating your account...";
 
@@ -392,11 +417,21 @@
                 email: email,
                 password: password,
                 options: {
+                    data: {username},
                     emailRedirectTo: "https://multicata.com/html/account.html"
                 }
             });
 
             if (error) {
+                // Auth can mask a profile uniqueness error as a generic database failure.
+                if (/database|username/i.test(error.message || "")) {
+                    const {data: taken} = await supabaseClient.from("profiles").select("id").eq("username",username).limit(1).maybeSingle();
+                    if (taken) {
+                        message.textContent = "That username is already taken. Choose another.";
+                        usernameInput.focus();
+                        return;
+                    }
+                }
                 message.textContent = explainAuthError(error);
                 return;
             }
@@ -447,19 +482,6 @@
                 return;
             }
 
-            const next = new URLSearchParams(location.search).get("next");
-            const composerDestinations = new Map([
-                ["post", "posts.html?compose=post"], ["image", "posts.html?compose=image"],
-                ["article", "writing.html?compose=article"]
-            ]);
-            if (composerDestinations.has(next)) {
-                location.replace(composerDestinations.get(next));
-                return;
-            }
-            if (["posts","chat","inbox"].includes(next)) {
-                location.replace(next + ".html");
-                return;
-            }
             await showLoggedInUser(data.user);
         } catch (error) {
             console.error("Account sign-in failed:", error);
@@ -504,6 +526,7 @@
 
         activeAccount = savedAppearance = currentProfilePictureUrl = selectedProfilePictureFile = null;
         document.getElementById("password").value = "";
+        document.getElementById("signupUsername").value = "";
         document.getElementById("publishMusic").reset();
         document.getElementById("message").textContent = "You have been logged out.";
         document.getElementById("accountMessage").textContent = "";
@@ -534,6 +557,7 @@
         activeAccount = user.id;
         document.getElementById("logOutButton").disabled = false;
         document.getElementById("editProfile").disabled = true;
+        document.getElementById("changeUsername").disabled = true;
         savedAppearance = null;
 
 
@@ -555,13 +579,26 @@
             user.email;
 
 
-        if (new URLSearchParams(location.search).get("compose") === "music") {
+        if (await ensureProfile(user) && activeAccount === user.id) resumeAccountDestination();
+    }
+
+    function resumeAccountDestination() {
+        const params = new URLSearchParams(location.search);
+        const destinations = new Map([
+            ["post", "posts.html?compose=post"], ["image", "posts.html?compose=image"],
+            ["article", "writing.html?compose=article"], ["posts", "posts.html"],
+            ["chat", "chat.html"], ["inbox", "inbox.html"]
+        ]);
+        const destination = destinations.get(params.get("next"));
+        if (destination) {
+            location.replace(destination);
+            return;
+        }
+        if (params.get("compose") === "music") {
             const form = document.getElementById("publishMusic");
             form.closest("details").open = true;
             form.elements.title.focus();
         }
-        await ensureProfile(user);
-
     }
 
 
@@ -583,6 +620,7 @@
             .order("username", {nullsFirst:false}).order("id").limit(1)
             .maybeSingle();
 
+        if (activeAccount !== user.id) return false;
 
         if (fetchError) {
 
@@ -599,8 +637,10 @@
 
 
         if (profile) {
+            document.getElementById("accountUsername").textContent = profile.username ? "@" + profile.username : "";
             loadProfileOptions(profile);
             document.getElementById("editProfile").disabled = false;
+            document.getElementById("changeUsername").disabled = false;
 
             document.getElementById("username").value =
                 profile.username || "";
@@ -671,8 +711,13 @@
                 profile.profile_picture
             );
 
-
-            return;
+            if (!profile.username?.trim()) {
+                showProfileSetup();
+                document.getElementById("profileMessage").textContent = "Choose a username so people can recognize your posts, music, and replies.";
+                document.getElementById("username").focus();
+                return false;
+            }
+            return true;
 
         }
 
@@ -681,11 +726,16 @@
         // CREATE BLANK PROFILE
         // ==========================================
 
+        if (registrationRetried) {
+            document.getElementById("accountMessage").textContent =
+                "Your profile could not be loaded. Please refresh and try again.";
+            return false;
+        }
         const { error: insertError } =
             await supabaseClient
                 .from("profiles")
                 .insert({user_id: user.id});
-        if (!insertError || (insertError.code === "23505" && !registrationRetried)) {
+        if (!insertError || insertError.code === "23505") {
             // Another tab may have finished this account's registration first.
             return ensureProfile(user, true);
         }
@@ -710,7 +760,12 @@
     // ==========================================
 
     function showProfileSetup() {
-        if (savedAppearance) loadProfileOptions(savedAppearance);
+        if (savedAppearance) {
+            document.getElementById("username").value = savedAppearance.username || "";
+            document.getElementById("displayName").value = savedAppearance.display_name || "";
+            document.getElementById("bio").value = savedAppearance.bio || "";
+            loadProfileOptions(savedAppearance);
+        }
 
         selectedProfilePictureFile = null;
 
@@ -1024,6 +1079,7 @@
         // Return to account view after a short delay
 
         setTimeout(function() {
+            if (activeAccount !== user.id) return;
 
             document.getElementById("profileArea").style.display =
                 "none";
@@ -1031,6 +1087,7 @@
 
             document.getElementById("accountArea").style.display =
                 "block";
+            resumeAccountDestination();
 
         }, 700);
 
