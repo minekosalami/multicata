@@ -8,28 +8,37 @@
 <script type="module" src="../js/radio-control.js"></script></head>
 <body class="radio-page"><header class="site-header"><a class="site-brand" href="index.html">Multi-Cata</a>
 <nav class="site-nav" aria-label="Main navigation"><a href="index.html">Home</a><a href="articles.html">Articles</a><a href="posts.html">Posts</a><a href="chat.html">Chat</a><a href="account.html">Account</a></nav></header>
-<main class="radio-layout"><h1>Radio Control Panel</h1><a href="radio.html">Listen to mCata Radio</a>
-<p id="panel-status" role="status">Checking access…</p><div id="controls" hidden>
-<section class="radio-card"><h2>Current broadcast</h2><p class="radio-screen" id="current"></p>
-<label>DJ mode <select id="mode"><option value="auto">Automatic</option><option value="manual">Manual DJ</option></select></label>
-<button id="skip">Skip current broadcast</button></section>
-<section class="radio-card lavender"><h2>Radio Music Library</h2><p id="summary"></p>
-<label>Search music <input type="search" id="search"></label><ul id="catalog"></ul></section>
-<section class="radio-card lavender"><h2>Announcements</h2>
-<label>Announcement title <input id="announcement-title" maxlength="150"></label>
-<label>Upload audio <input type="file" id="upload" accept=".wav,.flac,.mp3,.ogg,.oga,.opus,.m4a,.webm"></label>
-<button id="record">Record audio</button><button id="stop" disabled>Stop recording</button>
-<div class="radio-screen"><span id="record-time">Microphone off</span><meter id="level" min="0" max="1" value="0" aria-label="Microphone level"></meter></div>
-<audio id="preview" controls hidden></audio><p id="file-info"></p><button id="save" disabled>Save announcement</button></section>
-<section class="radio-card yellow"><h2>Broadcast timing</h2><form id="schedule">
-<label>Recording <select id="asset" required></select></label>
-<fieldset><legend>Broadcast timing</legend><label><input type="radio" name="period" value="instant" checked> Instant</label>
-<label><input type="radio" name="period" value="schedule"> Schedule</label></fieldset>
-<fieldset id="instant"><legend>Start playback</legend><label><input type="radio" name="instantTiming" value="now"> Play now</label>
-<label><input type="radio" name="instantTiming" value="next" checked> After current song</label></fieldset>
-<fieldset id="later" hidden><legend>Scheduled start</legend><label>Date and time (local) <input type="datetime-local" id="due"></label>
-<label><input type="radio" name="scheduleTiming" value="exact" checked> Play at exact time</label>
-<label><input type="radio" name="scheduleTiming" value="after"> After song ends</label></fieldset>
-<button>Queue broadcast</button></form></section>
-<section class="radio-card blue"><h2>Upcoming queue</h2><button id="append">Add selected recording to end</button><ol id="queue"></ol></section>
-</div></main></body></html>
+<main class="radio-layout radio-desk">
+<div class="desk-heading"><h1>Radio Control Panel</h1><a href="radio.html">Listen to the station</a></div>
+<p id="panel-status" role="status">Checking access…</p>
+<div id="controls" hidden>
+<section class="desk-current" aria-labelledby="current-heading">
+<h2 id="current-heading">Now playing</h2><p id="current"></p>
+</section>
+<details class="desk-section mic-section" open><summary>Record an announcement</summary>
+<div class="desk-fields">
+<div class="mic-controls"><button id="record" type="button">Record from microphone</button><button id="stop" disabled>Stop recording</button></div>
+<div class="mic-monitor"><span id="record-time">Microphone off</span><meter id="level" min="0" max="1" value="0" aria-label="Microphone level"></meter></div>
+<details class="upload-option"><summary>Use an audio file instead</summary>
+<label>Audio file <input type="file" id="upload" accept=".wav,.flac,.mp3,.ogg,.oga,.opus,.m4a,.webm"></label></details>
+<label>Announcement title (optional)<input id="announcement-title" maxlength="150" placeholder="Station announcement"></label>
+<audio id="preview" aria-label="Preview announcement" controls hidden></audio><p id="file-info"></p>
+<button id="save" class="desk-primary" disabled>Play after current song</button>
+<p id="announcement-status" role="status"></p>
+</div></details>
+<details class="desk-section queue-section"><summary>Upcoming queue <span id="queue-count" class="desk-count">0</span></summary>
+<div class="desk-fields"><p id="empty-queue">No broadcasts queued. Music rotation continues automatically.</p><ol id="queue"></ol></div></details>
+<details class="desk-section schedule-section"><summary>Queue or schedule a broadcast</summary>
+<form id="schedule" class="desk-fields">
+<label>Recording<select id="asset" required></select></label>
+<label>When to play<select id="timing">
+<option value="next">After the current song</option><option value="queue">At the end of the queue</option>
+<option value="exact">At a specific time</option><option value="after">After the song playing at a specific time</option>
+<option value="now">Immediately (interrupt current broadcast)</option></select></label>
+<label id="later" hidden>Local date and time<input type="datetime-local" id="due"></label>
+<button class="desk-primary">Queue broadcast</button></form></details>
+<details class="desk-section rotation-section"><summary>Music rotation and DJ controls</summary><div class="desk-fields">
+<label>DJ mode<select id="mode"><option value="auto">Automatic (listener voting on)</option><option value="manual">Manual DJ (listener voting off)</option></select></label>
+<button id="skip">Skip current broadcast</button><h2>Music in rotation</h2><p id="summary"></p>
+<label>Search catalog<input type="search" id="search"></label><ul id="catalog"></ul>
+</div></details></div></main></body></html>

@@ -58,6 +58,38 @@ body .knobs .radio-knob {position:relative;box-sizing:border-box;display:block;w
 .radio-card a {color:#483552}.radio-card [data-now] img {width:64px;height:64px;object-fit:cover;float:left;margin-right:1rem}
 [data-feedback]:empty {display:none}
 #controls {display:grid;gap:1rem}
+.radio-desk [hidden] {display:none!important}
+.radio-desk {gap:.8rem}
+.desk-heading {display:flex;align-items:baseline;justify-content:space-between;gap:.6rem 1rem;flex-wrap:wrap}
+.desk-heading a {color:#f2e8ff}
+.desk-current {border:3px double #a6ad99;background:#17251e;color:#ddedc4;padding:.8rem 1.1rem;border-radius:6px}
+.desk-current h2 {font:700 .82rem/1.5 monospace;color:#bdd49c}
+.desk-current p {margin:.2rem 0 0;font:600 1.12rem/1.4 monospace;overflow-wrap:anywhere}
+.desk-section {min-width:0;color:#29232f;background:var(--desk-paper);border:1px solid #4f4556;border-radius:6px;box-shadow:inset 0 1px #ffffff90,0 3px #19121f}
+.mic-section {--desk-paper:#e5cee9}
+.queue-section {--desk-paper:#cbdfea}
+.schedule-section {--desk-paper:#f1e1b9}
+.rotation-section {--desk-paper:#d1e2ce}
+.desk-section>summary {cursor:pointer;padding:.85rem 1rem;font:700 1.18rem/1.35 Georgia,serif}
+.desk-section[open]>summary {border-bottom:1px solid #403b5038}
+.desk-count {margin-left:.4rem;font:600 .85rem monospace}
+.desk-fields {display:grid;gap:.7rem;padding:1rem;min-width:0}
+.desk-fields :is(input,select,audio) {width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.desk-fields label {display:grid;gap:.25rem;font-weight:600}
+.desk-fields button {margin:0;justify-self:start}
+.desk-fields p {margin:0;overflow-wrap:anywhere}
+.radio-desk :is(#panel-status,#file-info,#announcement-status,#queue):empty {display:none}
+.mic-controls,.mic-monitor {display:flex;align-items:center;flex-wrap:wrap;gap:.45rem 1rem}
+.mic-monitor {font:.85rem monospace}
+.mic-monitor meter {width:min(7rem,100%)}
+.desk-fields .desk-primary {background:#403149;color:white;border-radius:4px;padding:.45rem .9rem}
+.desk-fields .desk-primary:disabled {opacity:.55}
+.upload-option>summary {cursor:pointer;padding-block:.5rem}
+.desk-fields :is(ol,ul) {padding-inline-start:1.35rem;margin:0}
+.desk-fields li {overflow-wrap:anywhere;padding:.45rem 0;border-bottom:1px solid #403b5026}
+.desk-fields li button {margin:.15rem .25rem}
+.desk-fields #catalog {max-height:24rem;overflow:auto}
+.desk-section summary:focus-visible {outline:3px solid #754687;outline-offset:1px}
 .radio-mini {position:fixed;bottom:.6rem;right:.6rem;z-index:24;display:flex;gap:.5rem;align-items:center;max-width:calc(100% - 1.2rem);padding:.5rem .7rem;font:.86rem/1.3 monospace}
 .radio-mini a {display:grid;color:#1b3226}.radio-mini input{width:4rem}.radio-mini button {min-height:44px;min-width:44px}
 @media(max-width:540px){.radio-columns{grid-template-columns:1fr}.radio-layout{width:calc(100% - 1rem);margin-top:1rem}.radio-card{padding:.8rem}}

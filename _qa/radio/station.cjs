@@ -52,8 +52,12 @@ async function checks(){
     await assert.rejects(admin('announce',{path:file,seconds:20,title:'Fixture recording'}));
     await assert.rejects(rpc(db,owner,'radio_verify_object($1)',[file]));
     await db.query('select radio_verify_object($1)',[file]);
-    panel=await admin('announce',{path:file,seconds:20,title:'Fixture recording'});
-    const ann=panel.assets.find(x=>!x.music).id;
+    const announce=u=>rpc(db,u,'radio_announce_next($1,$2,$3)',[file,'Fixture recording',20]);
+    for(const u of [null,...ids])await assert.rejects(announce(u),{code:'42501'});
+    const ann=await announce(owner);assert.equal(await announce(owner),ann);
+    panel=await admin('list');
+    assert.equal(panel.queue.filter(q=>q.asset===ann).length,1);
+    await admin('remove',{queue:panel.queue.find(q=>q.asset===ann).id});
     await vote(ids[0],s.round,ids[2]);
     await admin('enqueue',{id:ann,timing:'now'});assert.equal((await state()).current.item.id,ann);
     await admin('skip',{current:(await state()).current.id});assert.equal((await state()).current.item.id,ids[2]);

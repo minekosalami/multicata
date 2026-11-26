@@ -42,6 +42,8 @@ function paint(){
     el("asset").replaceChildren(...assets.map(a=>new Option(a.title+" · "+a.artist+" · "+format(a.seconds),a.id)));
     if(assets.some(a=>a.id===selected))el("asset").value=selected;
     const regular=queue.filter(q=>q.due===null);
+    el("queue-count").textContent=queue.length;
+    el("empty-queue").hidden=queue.length>0;
     el("queue").replaceChildren(...queue.map(q=>{
         const li=MC.node("li",q.title+" ");
         const index=regular.indexOf(q);
@@ -88,7 +90,7 @@ async function preview(file,measured){
     }else{const r=await recordingUpload(file);ext=r.extension;mime=r.mime;body=r.body;}
     if(version!==sourceVersion)return;
     previewURL=URL.createObjectURL(body);
-    const seconds=await duration(previewURL).catch(error=>{if(measured>=1)return measured;throw error;});
+    const seconds=Number.isFinite(measured)&&measured>=1 ? measured : await duration(previewURL);
     if(version!==sourceVersion)return;
     mediaFile={body,ext,mime,seconds,path:null};
     el("preview").src=previewURL;el("preview").hidden=false;
@@ -102,8 +104,10 @@ function stopMic(){
 async function record(){
     el("record").disabled=true;
     try{
+        if(!(await MC.rpc("radio_can_edit"))){el("controls").hidden=true;throw Error("Only @lliosette can record a station announcement.");}
         if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error("Microphone recording is unavailable in this browser. Use Upload audio.");
         microphone=await navigator.mediaDevices.getUserMedia({audio:true});
+        if(el("controls").hidden){stopMic();return;}
         const mime=["audio/webm;codecs=opus","audio/mp4","audio/ogg;codecs=opus"].find(m=>MediaRecorder.isTypeSupported(m));
         if(!mime)throw Error("Use Upload audio or another browser to record.");
         const chunks=[];let size=0;
@@ -114,18 +118,32 @@ async function record(){
             const measured=(performance.now()-recordingStart)/1000;stopMic();el("stop").disabled=true;
             try{const ext=mime.includes("webm")?"webm":mime.includes("mp4")?"m4a":"ogg";
                 await preview(new File(chunks,"Announcement."+ext,{type:mime.split(";")[0]}),measured);
-            }catch(e){status(e.message);}finally{el("record").disabled=false;el("record").textContent="Re-record";}
+            }catch(e){status(e.message);}finally{el("record").disabled=false;el("upload").disabled=false;el("record").textContent="Re-record";}
         };
         meterContext=new AudioContext();const analyser=meterContext.createAnalyser();analyser.fftSize=256;
         meterContext.createMediaStreamSource(microphone).connect(analyser);const data=new Uint8Array(analyser.fftSize);
         recordingStart=performance.now();recorder.start(1000);el("stop").disabled=false;
+        el("preview").pause();el("save").disabled=true;el("upload").value="";el("upload").disabled=true;
+        el("upload").closest("details").open=false;
+        el("announcement-status").textContent="";
         meterTimer=setInterval(()=>{analyser.getByteTimeDomainData(data);el("level").value=Math.max(...data.map(v=>Math.abs(v-128)))/128;
             el("record-time").textContent="● Recording "+format((performance.now()-recordingStart)/1000);},150);
-    }catch(e){stopMic();el("record").disabled=false;throw e;}
+    }catch(e){
+        stopMic();el("record").disabled=false;
+        if(e.name==="NotAllowedError")throw Error("Allow microphone access for MultiCata in your browser, then try again.");
+        throw e;
+    }
 }
 async function setup(){
     if(!(await MC.rpc("radio_can_edit"))){status("Only @lliosette can edit the station.");return;}
     owner=await MC.viewer();radio=await window.multiCataPlayer.getRadio();
+    supabaseClient.auth.onAuthStateChange((event,session)=>{
+        if(event==="SIGNED_OUT" || (session?.user && session.user.id!==owner?.id)){
+            el("controls").hidden=true;
+            if(recorder?.state==="recording")recorder.stop();
+            stopMic();status("Only @lliosette can edit the station.");
+        }
+    });
     el("controls").hidden=false;status("");
     let lastState;
     const update=()=>{const s=radio.state;el("current").textContent=s?.current?s.current.item.title+" · "+format(radio.elapsed())+" / "+format(s.current.item.seconds):"Off air";
@@ -139,25 +157,35 @@ async function setup(){
     el("mode").onchange=guarded(async()=>{await manage("mode",{manual:el("mode").value==="manual"});await radio.refresh();});
     el("skip").onclick=guarded(async()=>{await manage("skip",{current:radio.state?.current?.id});await radio.refresh();});
     el("record").onclick=guarded(record);el("stop").onclick=()=>{if(recorder?.state==="recording")recorder.stop();};
-    el("upload").onchange=guarded(()=>preview(el("upload").files[0]));
+    el("upload").onchange=guarded(()=>{el("announcement-status").textContent="";return preview(el("upload").files[0]);});
     el("save").onclick=guarded(async()=>{
-        const file=mediaFile,title=el("announcement-title").value.trim();
+        const file=mediaFile,title=el("announcement-title").value.trim()||"Station announcement";
+        el("record").disabled=true;el("upload").disabled=true;
         try{
-            if(!title||!file)throw Error("Enter a title and choose a recording.");
+            if(!file)throw Error("Record or upload an announcement first.");
+            el("announcement-status").textContent="Queuing announcement…";
             await uploadAnnouncement(supabaseClient,file,owner.id);
-            await manage("announce",{title,path:file.path,seconds:file.seconds});
-            el("asset").value=assets.find(a=>a.path===file.path).id;
-            status("Announcement saved. Choose its broadcast timing.");mediaFile=null;
-        }finally{el("save").disabled=!mediaFile;}
+            await MC.rpc("radio_announce_next",{object_path:file.path,announcement_title:title,seconds:file.seconds});
+            mediaFile=null;
+            el("announcement-status").textContent="Queued after the current song: "+title+".";
+            await manage("list");
+            await radio.refresh();
+        }catch(e){
+            if(mediaFile)el("announcement-status").textContent=e.message||"Could not queue the announcement. Try again.";
+            throw e;
+        }finally{el("save").disabled=!mediaFile;el("record").disabled=false;el("upload").disabled=false;}
     });
     const form=el("schedule");
-    form.onchange=()=>{const later=form.elements.period.value==="schedule";
-        el("later").hidden=!later;el("instant").hidden=later;el("due").required=later;form.querySelector("button").textContent=later?"Schedule broadcast":"Queue broadcast";};
-    form.onsubmit=guarded(async e=>{e.preventDefault();const later=form.elements.period.value==="schedule", submit=form.querySelector("button");
+    el("timing").onchange=()=>{
+        const timing=el("timing").value, later=timing==="exact"||timing==="after";
+        el("later").hidden=!later;el("due").disabled=!later;el("due").required=later;
+        form.querySelector("button").textContent=later?"Schedule broadcast":timing==="now"?"Play now":"Queue broadcast";
+    };
+    el("timing").onchange();
+    form.onsubmit=guarded(async e=>{e.preventDefault();const timing=el("timing").value, submit=form.querySelector("button");
         if(submit.disabled)return;submit.disabled=true;
-        try{await manage("enqueue",{id:el("asset").value,timing:later?form.elements.scheduleTiming.value:form.elements.instantTiming.value,
-            due:later?new Date(el("due").value).toISOString():null});status("Broadcast saved.");await radio.refresh();}
+        try{await manage("enqueue",{id:el("asset").value,timing,
+            due:el("due").required?new Date(el("due").value).toISOString():null});status("Broadcast saved.");await radio.refresh();}
         finally{submit.disabled=false;}});
-    el("append").onclick=guarded(()=>manage("enqueue",{id:el("asset").value,timing:"queue"}));
 }
 setup().catch(e=>status(e.message||"Could not load the radio control panel."));
