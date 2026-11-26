@@ -20,7 +20,7 @@ create policy insertown on public.posts for insert to authenticated with check(u
 create policy del on public.posts for delete to authenticated using(user_id=auth.uid());
 insert into storage.buckets(id,name) values('avatars','avatars');`);
 for(const f of fs.readdirSync('supabase/migrations').sort()){
- if(legacyDuplicates && f.includes('00400')){
+ if(legacyDuplicates && f==='20261121000400_music_community.sql'){
    await run("insert into auth.users values ('00000000-0000-4000-8000-000000000004');insert into profiles(user_id,username) values ('00000000-0000-4000-8000-000000000004','old_name'),('00000000-0000-4000-8000-000000000004','other_name');");
  }
  await run(fs.readFileSync('supabase/migrations/'+f,'utf8'));
@@ -33,7 +33,7 @@ for(const [i,id] of ids.entries()){
 for(let i=0;i<3;i++){
  const path=ids[1]+'/'+ids[i]+'.mp3';
  await db.query("insert into storage.objects values('creator-music',$1)",[path]);
- await db.query("insert into tracks(id,user_id,title,release_name,audio_path,credits) values($1,$2,$3,'QA release',$4,'Fixture credit')",[ids[i],ids[1],'Fixture recording '+(i+1),path]);
+ await db.query("insert into tracks(id,user_id,title,release_name,audio_path,credits,duration_seconds) values($1,$2,$3,'QA release',$4,'Fixture credit',104.1)",[ids[i],ids[1],'Fixture recording '+(i+1),path]);
 }
 await db.query("insert into posts(id,user_id,content) values($1,$2,'Disposable studio update')",[ids[0],ids[1]]);
 return db;

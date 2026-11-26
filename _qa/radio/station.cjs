@@ -13,7 +13,9 @@ async function checks(){
     const admin=(action,args={})=>rpc(db,owner,'radio_manage($1,$2)',[action,args]);
     const state=()=>rpc(db,null,'radio_state()');
     const vote=(member,round,choice)=>rpc(db,member,'radio_vote($1,$2)',[round,choice]);
-    assert.equal((await state()).current,null);
+    assert.equal((await state()).votes.length,4);
+    assert.equal((await db.query('select count(*)::int as total from mc_radio.assets where approved')).rows[0].total,4);
+    await assert.rejects(db.query("update mc_radio.assets set stream_path='unrelated.mp3' where music=$1",[ids[0]]),{code:'23514'});
     for(const member of [null,...ids]){
         await assert.rejects(rpc(db,member,"radio_manage('mode',$1)",[{manual:true}]));
         await assert.rejects(asUser(db,member,tx=>tx.query("update public.radio_updates set revision=0")));
@@ -21,7 +23,12 @@ async function checks(){
     }
     await db.query('insert into article_moderators values ($1)',[ids[0]]);
     assert.equal(await rpc(db,ids[0],'radio_can_edit()'),false);
-    for(const id of [bundled,...ids])await admin('approve',{id,seconds:120});
+    // Check that random rotation advances with no votes, queue or moderator action.
+    const start=(await state()).current;
+    await db.query('select mc_radio.advance($1::timestamptz)',[start.ends]);
+    const following=(await state()).current;
+    assert.notEqual(following.item.id,start.item.id);
+    await db.exec("update mc_radio.history set started=started-interval '105 seconds',ends=ends-interval '105 seconds'");
     let s=await state();assert.equal(s.votes.length,4);assert.equal(new Set(s.votes.map(v=>v.id)).size,4);
     for(const member of ids)await vote(member,s.round,ids[1]);
     await vote(ids[0],s.round,ids[2]);s=await state();assert.equal(s.votes.find(v=>v.id===ids[1]).count,2);

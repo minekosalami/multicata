@@ -72,6 +72,8 @@ const {server,openVisitor}=require('./runtime.cjs');
     await act(artist,'Publish track').click();
     await artist.getByRole('link',{name:'View track on profile',exact:true}).click();
     await act(artist,'Play Fixture upload').waitFor();
+    const rotation=await db.query("select a.seconds=t.duration_seconds as matching from tracks t join mc_radio.assets a on a.music=t.id and a.approved where t.title='Fixture upload'");
+    assert.equal(rotation.rows[0]?.matching,true);
   } finally {
     fs.unlinkSync(song);
   }

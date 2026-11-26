@@ -25,17 +25,17 @@ function guarded(task){return async event=>{
 function action(text,fn){return MC.button(text,guarded(fn));}
 function paint(){
     const music=assets.filter(a=>a.music);
-    el("summary").textContent=music.length+" approved "+(music.length===1?"song":"songs")+" · "+format(music.reduce((n,a)=>n+a.seconds,0))+" total";
+    el("summary").textContent=music.length+" "+(music.length===1?"song in rotation":"songs in rotation")+" · "+format(music.reduce((n,a)=>n+a.seconds,0))+" total";
     const term=el("search").value.trim().toLowerCase();
     el("catalog").replaceChildren(...catalog.filter(r=>(r.title+" "+r.artist).toLowerCase().includes(term)).map(r=>{
         const approved=music.some(a=>a.id===r.id),li=MC.node("li",r.title+" · "+r.artist+" ");
-        li.append(action(approved?"Remove approval":"Approve",async()=>{
+        li.append(action(approved?"Remove from rotation":"Add to rotation",async()=>{
             if(approved)await manage("revoke",{id:r.id});
             else {
                 const url=radioURL(supabaseClient,{provider:r.id===MC.bundled?"bundled":"catalog",path:r.audio_path});
                 await manage("approve",{id:r.id,seconds:await duration(url)});
             }
-            status(approved?"Approval removed.":"Song approved.");
+            status(approved?"Song removed from rotation.":"Song added to rotation.");
         }));return li;
     }));
     const selected=el("asset").value;

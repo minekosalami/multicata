@@ -1,6 +1,6 @@
 # mCata Radio release review
 
-**Production backend, November 25, 2026.** The radio and signup migrations are applied. The station clock completed a scheduled run, the public radio endpoint returned the off-air state, and the recording verifier rejected a signed-out request. The station starts broadcasting when @lliosette approves the first song.
+**Catalog rotation, November 25, 2026.** All 32 catalog songs are eligible for rotation. New uploads enter rotation when published. The 28 existing WAV recordings have 128 kbps MP3 playback copies for radio. Their combined size is 71,307,300 bytes, compared with 843,862,522 bytes for the original WAVs. Profiles use the uploaded originals. New songs stream their original until a smaller copy is available.
 
 ## Who can do what
 
@@ -20,7 +20,7 @@ Announcement uploads have a dedicated bucket, owner-only insert policy, path res
 
 PostgreSQL stores the start and end of each broadcast. Its clock advances at actual item boundaries, even if a timer wakes late. A single advisory transaction lock and a locked station row serialize edits, votes and transitions. A minute-level Supabase Cron job maintains history while the website is closed. During playback, clients also request state at the next scheduled interruption or item end. A delayed job can reconstruct elapsed items, with a limit of 256 transitions per transaction. Subsequent clock ticks or public reads continue recovery.
 
-The browser anchors the server timestamp to the midpoint of the request using a monotonic clock. It seeks on joining, changing broadcasts or returning with more than 1.25 seconds of drift. It calculates progress locally. Realtime invalidations are debounced. An active receiver also checks state at least once a minute, and on reconnect or return to the page.
+The browser anchors the server timestamp to the midpoint of the request using a monotonic clock. It seeks on joining, changing broadcasts or returning with more than 1.25 seconds of drift. It calculates progress locally. Realtime invalidations are debounced. Connected receivers refresh at broadcast boundaries and at least once every five minutes. Without Realtime they poll once a minute. The idle homepage widget releases its subscription when it leaves the viewport.
 
 - **Rotation and voting.** Automatic rounds choose up to four distinct approved recordings, favoring songs outside recent history. A vote is keyed by account and round. The most votes wins, and SQL selects randomly among ties. With no votes, rotation favors less recently played music. Revoking approval removes the song from ballots and pending queues while the current broadcast finishes.
 - **Priority.** Play Now interrupts immediately. An exact-time event can interrupt a playing recording. After Song Ends becomes eligible at its scheduled time and waits for a boundary. At a shared boundary, due exact events precede due after-song events, followed by the ordered manual queue. Equal timestamps resolve by queue order and row ID. An exact event displaced by another event at the identical instant stays queued for the next boundary. History records shortened airtime when a broadcast is interrupted.
@@ -80,7 +80,7 @@ npx supabase db push --remote
 npx supabase functions deploy radio-verify
 ```
 
-The function validates bearer sessions with Supabase Auth itself and requires the existing owner grant. It uses the standard hosted URL, anon key and server-only service-role environment variables. Verify CORS and range delivery on both audio buckets. Approve the first real song from the owner account, then check a signed-out receiver, a second signed-in listener and a rejected ordinary-member edit. Confirm Cron history with every browser closed. An idle or suspended project cannot provide a hosting uptime guarantee. The clock reconstructs missed elapsed boundaries when service resumes.
+The function validates bearer sessions with Supabase Auth itself and requires the existing owner grant. It uses the standard hosted URL, anon key and server-only service-role environment variables. Verify CORS and range delivery on both audio buckets. Check a signed-out receiver, a second signed-in listener and the owner?s rotation controls. Confirm Cron history with every browser closed. An idle or suspended project cannot provide a hosting uptime guarantee. The clock reconstructs missed elapsed boundaries when service resumes.
 
 **Future R2 move.** Preserve catalog IDs, object paths, artist associations and durations. Copy and validate the objects, configure range responses and CORS for the site, then change the URL/upload resolver in `radio-media.js` and the trusted verifier’s storage backend. The timeline, votes and favorites keep their IDs. No R2 account or paid service was activated.
 

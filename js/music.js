@@ -60,7 +60,7 @@ async function loadTrackChoices() {
 }
 
 async function validateAudioContainer(blob) {
-    // M4A and Ogg share containers with video. Inspect local metadata without playing the file.
+    // Measure the local file before uploading, without downloading the published song.
     const media = document.createElement("video");
     const url = URL.createObjectURL(blob);
     let timeout;
@@ -74,6 +74,7 @@ async function validateAudioContainer(blob) {
             media.src = url;
         });
         if (media.videoWidth || media.videoHeight) throw new Error("Choose an audio-only recording.");
+        return media.duration;
     } finally {
         clearTimeout(timeout);
         media.onloadedmetadata = media.onerror = null;
@@ -119,8 +120,8 @@ async function recordingUpload(file) {
 
     // Multipart storage uploads use the Blob MIME type, which file pickers may omit or mislabel.
     const body = file.slice(0, file.size, mime);
-    if (mime === "audio/mp4" || mime === "audio/ogg") await validateAudioContainer(body);
-    return {extension, mime, body};
+    const seconds=await validateAudioContainer(body);
+    return {extension, mime, body, seconds};
 }
 
 async function publishTrack(event) {
@@ -136,6 +137,9 @@ async function publishTrack(event) {
         const file = fields.recording.files[0];
         if (!title) throw new Error("Enter a track title.");
         const recording = await recordingUpload(file);
+        if (!Number.isFinite(recording.seconds) || recording.seconds < 1) {
+            throw new Error("Choose a recording at least one second long with a readable duration.");
+        }
         const {data:{user}} = await supabaseClient.auth.getUser();
         if (!user) throw new Error("Sign in to publish music.");
         const path = user.id + "/" + crypto.randomUUID() + "." + recording.extension;
@@ -144,7 +148,7 @@ async function publishTrack(event) {
         const art = fields.art.files[0] ? await uploadCommunityImage(user.id,fields.art.files[0]) : null;
         const uploaded = await bucket.upload(path, recording.body, {contentType:recording.mime});
         if (uploaded.error) {if(art)await supabaseClient.storage.from("community-images").remove([art]);throw new Error("Upload failed. Please try again.");}
-        const published = await supabaseClient.from("tracks").insert({user_id:user.id,title,
+        const published = await supabaseClient.from("tracks").insert({user_id:user.id,title,duration_seconds:recording.seconds,
             release_name:fields.releaseName.value.trim() || null,credits:fields.credits.value.trim() || null,...(art?{art_path:art}:{}),audio_path:path}).select("id").single();
         if (published.error) {
             if(published.error.code && /^[0-9A-Z]{5}$/.test(published.error.code)) {

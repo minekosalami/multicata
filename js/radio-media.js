@@ -2,7 +2,8 @@
 export function radioURL(client, item) {
     if (item.provider === "bundled") return new URL("../audio/GrassCatsPopM.mp3", import.meta.url).href;
     const bucket = item.provider === "catalog" ? "creator-music" : "radio-announcements";
-    return client.storage.from(bucket).getPublicUrl(item.path).data.publicUrl;
+    const path=item.provider==="catalog" && item.stream_path ? item.stream_path : item.path;
+    return client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 
 export function artworkURL(client,item) {

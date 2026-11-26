@@ -64,8 +64,11 @@ export async function station(base, takePlayer) {
         if(changed){
             playingId=current.id;presence(false);
             const url=radioURL(client,current.item);
-            if(transport.src!==url)transport.src=url;
-            correct();
+            if(transport.src!==url){
+                transport.src=url;
+                // Give the browser the live position before it starts buffering a long recording.
+                transport.currentTime=Math.min(elapsed(),current.item.seconds);
+            }else correct();
         } else correct();
         if(transport.paused && !transport.error && (changed||!transport.ended))transport.play().catch(error=>{
             if(tuned && current.id===playingId && error.name!=="AbortError"){message="Playback interrupted. Tune in again.";presence(false);emit();}
@@ -83,7 +86,9 @@ export async function station(base, takePlayer) {
             request=null;clearTimeout(timer);emit();
             if(!watchers.size&&!tuned || document.hidden&&!tuned)return;
             const boundaries=[Date.parse(state?.current?.ends),...(state?.scheduled||[]).filter(x=>x.timing==="exact").map(x=>Date.parse(x.due))].filter(t=>t>now());
-            timer=setTimeout(refresh,Math.max(200,Math.min(message?6000:60000,...boundaries.map(t=>t-now()+80))));
+            // With Realtime connected, wake for the broadcast boundary; changes arrive by push.
+            const heartbeat=message?6000:subscribed?300000:60000;
+            timer=setTimeout(refresh,Math.max(200,Math.min(heartbeat,...boundaries.map(t=>t-now()+80))));
         });
         return request;
     }

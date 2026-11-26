@@ -136,10 +136,16 @@ try{
     find("reset").onclick=()=>radio.resetKnobs();
     let timer;
     function stopView(){clearInterval(timer);release?.();release=null;}
+    let inView=true;
     function syncView(){
-        if(document.hidden||document.querySelector(".player-page")){stopView();return;}
+        if(document.hidden||!inView||document.querySelector(".player-page")){stopView();return;}
         if(release)return;
         release=radio.observe(display);timer=setInterval(tick,500);
+    }
+    if(!hasDetails && "IntersectionObserver" in window){
+        inView=false;
+        const observer=new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;syncView();},{rootMargin:"160px"});
+        observer.observe(root);
     }
     syncView();
     document.addEventListener("visibilitychange",syncView);

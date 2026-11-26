@@ -9,7 +9,7 @@ const out=process.env.RADIO_QA_DIR||__dirname;
  try{
   await seed(db);
   const admin=(action,args)=>rpc(db,owner,'radio_manage($1,$2)',[action,args]);
-  await admin('approve',{id:bundled,seconds:104.1});
+  await admin('enqueue',{id:bundled,timing:'now'});
   await db.exec("update mc_radio.history set started=started-interval '36 seconds',ends=ends-interval '36 seconds'");
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/html/';
   const chrome=await chromium.launch({channel:'chrome',args:['--autoplay-policy=no-user-gesture-required','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});browsers.push(chrome);
@@ -63,9 +63,10 @@ const out=process.env.RADIO_QA_DIR||__dirname;
   }
   const a=await visitor(chrome,ids[0],1280), b=await visitor(chrome,null,360,7200000);
   let audioRequests=0, transfer=0;
-  a.on('request',r=>{if(r.url().includes('/audio/')&&!r.url().endsWith('.js'))audioRequests++;});
-  a.on('requestfinished',async r=>{if(r.url().includes('/audio/'))try{transfer+=(await r.sizes()).responseBodySize;}catch{}});
-  await a.goto(url+'index.html');await a.locator('[data-air].on').waitFor();assert.equal(audioRequests,0);results.homeAudioRequests=audioRequests;
+  const isRecording=r=>/\/audio\/|\/storage\/v1\/object\/public\/(creator-music|radio-announcements)\//.test(r.url());
+  a.on('request',r=>{if(isRecording(r))audioRequests++;});
+  a.on('requestfinished',async r=>{if(isRecording(r))try{transfer+=(await r.sizes()).responseBodySize;}catch{}});
+  await a.goto(url+'index.html');await a.locator('.radio-widget').scrollIntoViewIfNeeded();await a.locator('[data-air].on').waitFor();assert.equal(audioRequests,0);results.homeAudioRequests=audioRequests;
   await a.getByText('Customize homepage',{exact:true}).waitFor();
   const aligned=await a.evaluate(()=>{
     const bounds=selector=>document.querySelector(selector).getBoundingClientRect();
@@ -159,11 +160,11 @@ const out=process.env.RADIO_QA_DIR||__dirname;
   await a.locator('.radio-mini button').click();await b.getByRole('button',{name:'Radio power'}).click();
   await a.evaluate(()=>window.multiCataPlayer.openPlayer(true));await a.waitForFunction(()=>!document.querySelector('.player-panel audio').paused);
   assert(await a.evaluate(()=>metrics.streams.every(m=>m.paused)));
-  const ctl=await visitor(chrome,owner,1000);await ctl.goto(url+'radio-control.html');await ctl.getByText('1 approved song',{exact:false}).waitFor();
+  const ctl=await visitor(chrome,owner,1000);await ctl.goto(url+'radio-control.html');await ctl.getByText('4 songs in rotation',{exact:false}).waitFor();
   await ctl.evaluate(()=>{const input=document.querySelector('#upload'),data=new DataTransfer();
     data.items.add(new File([new Uint8Array(52428801)],'large.wav',{type:'audio/wav'}));input.files=data.files;input.dispatchEvent(new Event('change'));});
   await ctl.getByRole('link',{name:'Save recording to this device'}).waitFor();assert(await ctl.locator('#save').isDisabled());
-  await ctl.locator('#search').fill('Fixture recording 1');await ctl.locator('#catalog button').click();await ctl.getByText('2 approved songs',{exact:false}).waitFor();
+  await ctl.locator('#search').fill('Fixture recording 1');await ctl.locator('#catalog button').click();await ctl.getByText('3 songs in rotation',{exact:false}).waitFor();
   await ctl.locator('#upload').setInputFiles('audio/GrassCatsPopM.mp3');await ctl.waitForFunction(()=>!document.querySelector('#save').disabled);
   await ctl.locator('#announcement-title').fill('Local file check');await ctl.locator('#save').click();await ctl.getByText('Announcement saved.',{exact:false}).waitFor();
   await ctl.locator('#record').click();await ctl.waitForFunction(()=>document.querySelector('#record-time').textContent.includes('Recording'));
